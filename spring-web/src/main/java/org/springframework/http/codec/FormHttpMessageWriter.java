@@ -127,7 +127,8 @@ public class FormHttpMessageWriter extends LoggingCodecSupport
 		mediaType = getMediaType(mediaType);
 		message.getHeaders().setContentType(mediaType);
 
-		Charset charset = mediaType.getCharset() != null ? mediaType.getCharset() : getDefaultCharset();
+		Charset charset = mediaType.getCharset();
+		Assert.notNull(charset, "No charset"); // should never occur
 
 		return Mono.from(inputStream).flatMap(form -> {
 			logFormData(form, hints);
@@ -139,7 +140,7 @@ public class FormHttpMessageWriter extends LoggingCodecSupport
 		});
 	}
 
-	protected MediaType getMediaType(@Nullable MediaType mediaType) {
+	private MediaType getMediaType(@Nullable MediaType mediaType) {
 		if (mediaType == null) {
 			return DEFAULT_FORM_DATA_MEDIA_TYPE;
 		}

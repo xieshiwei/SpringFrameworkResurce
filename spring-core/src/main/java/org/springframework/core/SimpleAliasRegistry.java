@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,18 +26,16 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.springframework.util.Assert;
-import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.util.StringValueResolver;
 
 /**
  * Simple implementation of the {@link AliasRegistry} interface.
- * <p>Serves as base class for
+ * Serves as base class for
  * {@link org.springframework.beans.factory.support.BeanDefinitionRegistry}
  * implementations.
  *
  * @author Juergen Hoeller
- * @author Qimiao Chen
  * @since 2.5.2
  */
 public class SimpleAliasRegistry implements AliasRegistry {
@@ -86,8 +84,8 @@ public class SimpleAliasRegistry implements AliasRegistry {
 	}
 
 	/**
-	 * Determine whether alias overriding is allowed.
-	 * <p>Default is {@code true}.
+	 * Return whether alias overriding is allowed.
+	 * Default is {@code true}.
 	 */
 	protected boolean allowAliasOverriding() {
 		return true;
@@ -100,9 +98,16 @@ public class SimpleAliasRegistry implements AliasRegistry {
 	 * @since 4.2.1
 	 */
 	public boolean hasAlias(String name, String alias) {
-		String registeredName = this.aliasMap.get(alias);
-		return ObjectUtils.nullSafeEquals(registeredName, name) || (registeredName != null
-				&& hasAlias(name, registeredName));
+		for (Map.Entry<String, String> entry : this.aliasMap.entrySet()) {
+			String registeredName = entry.getValue();
+			if (registeredName.equals(name)) {
+				String registeredAlias = entry.getKey();
+				if (registeredAlias.equals(alias) || hasAlias(registeredAlias, alias)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -145,7 +150,7 @@ public class SimpleAliasRegistry implements AliasRegistry {
 
 	/**
 	 * Resolve all alias target names and aliases registered in this
-	 * registry, applying the given {@link StringValueResolver} to them.
+	 * factory, applying the given StringValueResolver to them.
 	 * <p>The value resolver may for example resolve placeholders
 	 * in target bean names and even in alias names.
 	 * @param valueResolver the StringValueResolver to apply

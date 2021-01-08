@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.springframework.web.filter;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -33,8 +32,8 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
@@ -68,7 +67,7 @@ import org.springframework.web.util.UrlPathHelper;
 public class ForwardedHeaderFilter extends OncePerRequestFilter {
 
 	private static final Set<String> FORWARDED_HEADER_NAMES =
-			Collections.newSetFromMap(new LinkedCaseInsensitiveMap<>(10, Locale.ENGLISH));
+			Collections.newSetFromMap(new LinkedCaseInsensitiveMap<>(6, Locale.ENGLISH));
 
 	static {
 		FORWARDED_HEADER_NAMES.add("Forwarded");
@@ -77,7 +76,6 @@ public class ForwardedHeaderFilter extends OncePerRequestFilter {
 		FORWARDED_HEADER_NAMES.add("X-Forwarded-Proto");
 		FORWARDED_HEADER_NAMES.add("X-Forwarded-Prefix");
 		FORWARDED_HEADER_NAMES.add("X-Forwarded-Ssl");
-		FORWARDED_HEADER_NAMES.add("X-Forwarded-For");
 	}
 
 
@@ -220,25 +218,20 @@ public class ForwardedHeaderFilter extends OncePerRequestFilter {
 
 		private final int port;
 
-		@Nullable
-		private final InetSocketAddress remoteAddress;
-
 		private final ForwardedPrefixExtractor forwardedPrefixExtractor;
 
 
-		ForwardedHeaderExtractingRequest(HttpServletRequest servletRequest) {
-			super(servletRequest);
+		ForwardedHeaderExtractingRequest(HttpServletRequest request) {
+			super(request);
 
-			ServerHttpRequest request = new ServletServerHttpRequest(servletRequest);
-			UriComponents uriComponents = UriComponentsBuilder.fromHttpRequest(request).build();
+			HttpRequest httpRequest = new ServletServerHttpRequest(request);
+			UriComponents uriComponents = UriComponentsBuilder.fromHttpRequest(httpRequest).build();
 			int port = uriComponents.getPort();
 
 			this.scheme = uriComponents.getScheme();
 			this.secure = "https".equals(this.scheme);
 			this.host = uriComponents.getHost();
 			this.port = (port == -1 ? (this.secure ? 443 : 80) : port);
-
-			this.remoteAddress = UriComponentsBuilder.parseForwardedFor(request, request.getRemoteAddress());
 
 			String baseUrl = this.scheme + "://" + this.host + (port == -1 ? "" : ":" + port);
 			Supplier<HttpServletRequest> delegateRequest = () -> (HttpServletRequest) getRequest();
@@ -281,23 +274,6 @@ public class ForwardedHeaderFilter extends OncePerRequestFilter {
 		@Override
 		public StringBuffer getRequestURL() {
 			return this.forwardedPrefixExtractor.getRequestUrl();
-		}
-
-		@Override
-		@Nullable
-		public String getRemoteHost() {
-			return (this.remoteAddress != null ? this.remoteAddress.getHostString() : super.getRemoteHost());
-		}
-
-		@Override
-		@Nullable
-		public String getRemoteAddr() {
-			return (this.remoteAddress != null ? this.remoteAddress.getHostString() : super.getRemoteAddr());
-		}
-
-		@Override
-		public int getRemotePort() {
-			return (this.remoteAddress != null ? this.remoteAddress.getPort() : super.getRemotePort());
 		}
 	}
 
@@ -352,18 +328,11 @@ public class ForwardedHeaderFilter extends OncePerRequestFilter {
 				}
 			}
 			if (result != null) {
-				StringBuilder prefix = new StringBuilder(result.length());
-				String[] rawPrefixes = StringUtils.tokenizeToStringArray(result, ",");
-				for (String rawPrefix : rawPrefixes) {
-					int endIndex = rawPrefix.length();
-					while (endIndex > 0 && rawPrefix.charAt(endIndex - 1) == '/') {
-						endIndex--;
-					}
-					prefix.append((endIndex != rawPrefix.length() ? rawPrefix.substring(0, endIndex) : rawPrefix));
+				while (result.endsWith("/")) {
+					result = result.substring(0, result.length() - 1);
 				}
-				return prefix.toString();
 			}
-			return null;
+			return result;
 		}
 
 		@Nullable
@@ -381,7 +350,7 @@ public class ForwardedHeaderFilter extends OncePerRequestFilter {
 
 
 		public String getContextPath() {
-			return (this.forwardedPrefix != null ? this.forwardedPrefix : this.delegate.get().getContextPath());
+			return this.forwardedPrefix == null ? this.delegate.get().getContextPath() : this.forwardedPrefix;
 		}
 
 		public String getRequestUri() {

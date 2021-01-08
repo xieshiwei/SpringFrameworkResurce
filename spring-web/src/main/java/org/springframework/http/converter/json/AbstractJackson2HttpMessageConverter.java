@@ -18,13 +18,13 @@ package org.springframework.http.converter.json;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -55,15 +55,13 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StreamUtils;
 import org.springframework.util.TypeUtils;
 
 /**
  * Abstract base class for Jackson based and content type independent
  * {@link HttpMessageConverter} implementations.
  *
- * <p>Compatible with Jackson 2.9 to 2.12, as of Spring 5.3.
+ * <p>Compatible with Jackson 2.9 and higher, as of Spring 5.0.
  *
  * @author Arjen Poutsma
  * @author Keith Donald
@@ -78,7 +76,7 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 	private static final Map<String, JsonEncoding> ENCODINGS;
 
 	static {
-		ENCODINGS = CollectionUtils.newHashMap(JsonEncoding.values().length);
+		ENCODINGS = new HashMap<>(JsonEncoding.values().length + 1);
 		for (JsonEncoding encoding : JsonEncoding.values()) {
 			ENCODINGS.put(encoding.getJavaName(), encoding);
 		}
@@ -89,9 +87,7 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 	/**
 	 * The default charset used by the converter.
 	 */
-	@Nullable
-	@Deprecated
-	public static final Charset DEFAULT_CHARSET = null;
+	public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
 
 	protected ObjectMapper objectMapper;
@@ -105,6 +101,7 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 
 	protected AbstractJackson2HttpMessageConverter(ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
+		setDefaultCharset(DEFAULT_CHARSET);
 		DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter();
 		prettyPrinter.indentObjectsWith(new DefaultIndenter("  ", "\ndata:"));
 		this.ssePrettyPrinter = prettyPrinter;
@@ -309,9 +306,8 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 
 		MediaType contentType = outputMessage.getHeaders().getContentType();
 		JsonEncoding encoding = getJsonEncoding(contentType);
-
-		OutputStream outputStream = StreamUtils.nonClosing(outputMessage.getBody());
-		try (JsonGenerator generator = this.objectMapper.getFactory().createGenerator(outputStream, encoding)) {
+		JsonGenerator generator = this.objectMapper.getFactory().createGenerator(outputMessage.getBody(), encoding);
+		try {
 			writePrefix(generator, object);
 
 			Object value = object;

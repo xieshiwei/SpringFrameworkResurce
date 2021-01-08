@@ -17,12 +17,12 @@
 package org.springframework.beans.factory.xml;
 
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.testfixture.beans.TestBean;
+import org.springframework.tests.sample.beans.TestBean;
 
 /**
  * @author Juergen Hoeller
  */
-public class CountingFactory implements FactoryBean<String> {
+public class CountingFactory implements FactoryBean {
 
 	private static int factoryBeanInstanceCount = 0;
 
@@ -51,12 +51,12 @@ public class CountingFactory implements FactoryBean<String> {
 
 
 	@Override
-	public String getObject() {
+	public Object getObject() {
 		return "myString";
 	}
 
 	@Override
-	public Class<String> getObjectType() {
+	public Class getObjectType() {
 		return String.class;
 	}
 

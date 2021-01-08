@@ -130,7 +130,7 @@ public final class ResponseCookie extends HttpCookie {
 
 
 	@Override
-	public boolean equals(@Nullable Object other) {
+	public boolean equals(Object other) {
 		if (this == other) {
 			return true;
 		}
@@ -188,25 +188,6 @@ public final class ResponseCookie extends HttpCookie {
 	 * @return a builder to create the cookie with
 	 */
 	public static ResponseCookieBuilder from(final String name, final String value) {
-		return from(name, value, false);
-	}
-
-	/**
-	 * Factory method to obtain a builder for a server-defined cookie. Unlike
-	 * {@link #from(String, String)} this option assumes input from a remote
-	 * server, which can be handled more leniently, e.g. ignoring a empty domain
-	 * name with double quotes.
-	 * @param name the cookie name
-	 * @param value the cookie value
-	 * @return a builder to create the cookie with
-	 * @since 5.2.5
-	 */
-	public static ResponseCookieBuilder fromClientResponse(final String name, final String value) {
-		return from(name, value, true);
-	}
-
-
-	private static ResponseCookieBuilder from(final String name, final String value, boolean lenient) {
 
 		return new ResponseCookieBuilder() {
 
@@ -239,21 +220,8 @@ public final class ResponseCookie extends HttpCookie {
 
 			@Override
 			public ResponseCookieBuilder domain(String domain) {
-				this.domain = initDomain(domain);
+				this.domain = domain;
 				return this;
-			}
-
-			@Nullable
-			private String initDomain(String domain) {
-				if (lenient && StringUtils.hasLength(domain)) {
-					String str = domain.trim();
-					if (str.startsWith("\"") && str.endsWith("\"")) {
-						if (str.substring(1, str.length() - 1).trim().isEmpty()) {
-							return null;
-						}
-					}
-				}
-				return domain;
 			}
 
 			@Override

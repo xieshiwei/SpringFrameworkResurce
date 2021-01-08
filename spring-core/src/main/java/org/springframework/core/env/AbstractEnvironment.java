@@ -462,14 +462,18 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 		String[] parentActiveProfiles = parent.getActiveProfiles();
 		if (!ObjectUtils.isEmpty(parentActiveProfiles)) {
 			synchronized (this.activeProfiles) {
-				Collections.addAll(this.activeProfiles, parentActiveProfiles);
+				for (String profile : parentActiveProfiles) {
+					this.activeProfiles.add(profile);
+				}
 			}
 		}
 		String[] parentDefaultProfiles = parent.getDefaultProfiles();
 		if (!ObjectUtils.isEmpty(parentDefaultProfiles)) {
 			synchronized (this.defaultProfiles) {
 				this.defaultProfiles.remove(RESERVED_DEFAULT_PROFILE_NAME);
-				Collections.addAll(this.defaultProfiles, parentDefaultProfiles);
+				for (String profile : parentDefaultProfiles) {
+					this.defaultProfiles.add(profile);
+				}
 			}
 		}
 	}

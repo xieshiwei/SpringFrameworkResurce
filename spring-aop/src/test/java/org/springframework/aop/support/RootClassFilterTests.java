@@ -16,12 +16,15 @@
 
 package org.springframework.aop.support;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import org.springframework.aop.ClassFilter;
-import org.springframework.beans.testfixture.beans.ITestBean;
+import org.springframework.tests.sample.beans.ITestBean;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Unit tests for {@link RootClassFilter}.
@@ -29,36 +32,35 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Sam Brannen
  * @since 5.1.10
  */
-class RootClassFilterTests {
+public class RootClassFilterTests {
 
 	private final ClassFilter filter1 = new RootClassFilter(Exception.class);
 	private final ClassFilter filter2 = new RootClassFilter(Exception.class);
 	private final ClassFilter filter3 = new RootClassFilter(ITestBean.class);
 
-
 	@Test
-	void matches() {
-		assertThat(filter1.matches(Exception.class)).isTrue();
-		assertThat(filter1.matches(RuntimeException.class)).isTrue();
-		assertThat(filter1.matches(Error.class)).isFalse();
+	public void matches() {
+		assertTrue(filter1.matches(Exception.class));
+		assertTrue(filter1.matches(RuntimeException.class));
+		assertFalse(filter1.matches(Error.class));
 	}
 
 	@Test
-	void testEquals() {
-		assertThat(filter1).isEqualTo(filter2);
-		assertThat(filter1).isNotEqualTo(filter3);
+	public void testEquals() {
+		assertEquals(filter1, filter2);
+		assertNotEquals(filter1, filter3);
 	}
 
 	@Test
-	void testHashCode() {
-		assertThat(filter1.hashCode()).isEqualTo(filter2.hashCode());
-		assertThat(filter1.hashCode()).isNotEqualTo(filter3.hashCode());
+	public void testHashCode() {
+		assertEquals(filter1.hashCode(), filter2.hashCode());
+		assertNotEquals(filter1.hashCode(), filter3.hashCode());
 	}
 
 	@Test
-	void testToString() {
-		assertThat(filter1.toString()).isEqualTo("org.springframework.aop.support.RootClassFilter: java.lang.Exception");
-		assertThat(filter1.toString()).isEqualTo(filter2.toString());
+	public void testToString() {
+		assertEquals("org.springframework.aop.support.RootClassFilter: java.lang.Exception", filter1.toString());
+		assertEquals(filter1.toString(), filter2.toString());
 	}
 
 }

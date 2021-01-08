@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2019 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,20 +27,19 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.jdbc.JdbcUpdateAffectedIncorrectNumberOfRowsException;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.Assert.*;
+import static org.mockito.BDDMockito.*;
 
 /**
  * @author Trevor Cook
@@ -70,6 +69,9 @@ public class SqlUpdateTests {
 	private static final String INSERT_GENERATE_KEYS =
 			"insert into show (name) values(?)";
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	private DataSource dataSource;
 
 	private Connection connection;
@@ -81,7 +83,7 @@ public class SqlUpdateTests {
 	private ResultSetMetaData resultSetMetaData;
 
 
-	@BeforeEach
+	@Before
 	public void setUp() throws Exception {
 		dataSource = mock(DataSource.class);
 		connection = mock(Connection.class);
@@ -91,7 +93,7 @@ public class SqlUpdateTests {
 		given(dataSource.getConnection()).willReturn(connection);
 	}
 
-	@AfterEach
+	@After
 	public void verifyClosed() throws Exception {
 		verify(preparedStatement).close();
 		verify(connection).close();
@@ -106,7 +108,7 @@ public class SqlUpdateTests {
 		Updater pc = new Updater();
 		int rowsAffected = pc.run();
 
-		assertThat(rowsAffected).isEqualTo(1);
+		assertEquals(1, rowsAffected);
 	}
 
 	@Test
@@ -117,7 +119,7 @@ public class SqlUpdateTests {
 		IntUpdater pc = new IntUpdater();
 		int rowsAffected = pc.run(1);
 
-		assertThat(rowsAffected).isEqualTo(1);
+		assertEquals(1, rowsAffected);
 		verify(preparedStatement).setObject(1, 1, Types.NUMERIC);
 	}
 
@@ -129,7 +131,7 @@ public class SqlUpdateTests {
 		IntIntUpdater pc = new IntIntUpdater();
 		int rowsAffected = pc.run(1, 1);
 
-		assertThat(rowsAffected).isEqualTo(1);
+		assertEquals(1, rowsAffected);
 		verify(preparedStatement).setObject(1, 1, Types.NUMERIC);
 		verify(preparedStatement).setObject(2, 1, Types.NUMERIC);
 	}
@@ -174,7 +176,7 @@ public class SqlUpdateTests {
 
 		NamedParameterUpdater pc = new NamedParameterUpdater();
 		int rowsAffected = pc.run(1, 1);
-		assertThat(rowsAffected).isEqualTo(1);
+		assertEquals(1, rowsAffected);
 		verify(preparedStatement).setObject(1, 1, Types.NUMERIC);
 		verify(preparedStatement).setObject(2, 1, Types.DECIMAL);
 	}
@@ -187,7 +189,7 @@ public class SqlUpdateTests {
 		StringUpdater pc = new StringUpdater();
 		int rowsAffected = pc.run("rod");
 
-		assertThat(rowsAffected).isEqualTo(1);
+		assertEquals(1, rowsAffected);
 		verify(preparedStatement).setString(1, "rod");
 	}
 
@@ -199,7 +201,7 @@ public class SqlUpdateTests {
 		MixedUpdater pc = new MixedUpdater();
 		int rowsAffected = pc.run(1, 1, "rod", true);
 
-		assertThat(rowsAffected).isEqualTo(1);
+		assertEquals(1, rowsAffected);
 		verify(preparedStatement).setObject(1, 1, Types.NUMERIC);
 		verify(preparedStatement).setObject(2, 1, Types.NUMERIC, 2);
 		verify(preparedStatement).setString(3, "rod");
@@ -223,9 +225,9 @@ public class SqlUpdateTests {
 		KeyHolder generatedKeyHolder = new GeneratedKeyHolder();
 		int rowsAffected = pc.run("rod", generatedKeyHolder);
 
-		assertThat(rowsAffected).isEqualTo(1);
-		assertThat(generatedKeyHolder.getKeyList().size()).isEqualTo(1);
-		assertThat(generatedKeyHolder.getKey().intValue()).isEqualTo(11);
+		assertEquals(1, rowsAffected);
+		assertEquals(1, generatedKeyHolder.getKeyList().size());
+		assertEquals(11, generatedKeyHolder.getKey().intValue());
 		verify(preparedStatement).setString(1, "rod");
 		verify(resultSet).close();
 	}
@@ -238,7 +240,7 @@ public class SqlUpdateTests {
 
 		int rowsAffected = pc.run(1, 1, "rod", true);
 
-		assertThat(rowsAffected).isEqualTo(1);
+		assertEquals(1, rowsAffected);
 		verify(preparedStatement).setObject(1, 1, Types.NUMERIC);
 		verify(preparedStatement).setObject(2, 1, Types.NUMERIC);
 		verify(preparedStatement).setString(3, "rod");
@@ -253,7 +255,7 @@ public class SqlUpdateTests {
 		MaxRowsUpdater pc = new MaxRowsUpdater();
 
 		int rowsAffected = pc.run();
-		assertThat(rowsAffected).isEqualTo(3);
+		assertEquals(3, rowsAffected);
 	}
 
 	@Test
@@ -264,7 +266,7 @@ public class SqlUpdateTests {
 		MaxRowsUpdater pc = new MaxRowsUpdater();
 		int rowsAffected = pc.run();
 
-		assertThat(rowsAffected).isEqualTo(5);
+		assertEquals(5, rowsAffected);
 	}
 
 	@Test
@@ -274,8 +276,8 @@ public class SqlUpdateTests {
 
 		MaxRowsUpdater pc = new MaxRowsUpdater();
 
-		assertThatExceptionOfType(JdbcUpdateAffectedIncorrectNumberOfRowsException.class).isThrownBy(
-				pc::run);
+		thrown.expect(JdbcUpdateAffectedIncorrectNumberOfRowsException.class);
+		pc.run();
 	}
 
 	@Test
@@ -286,16 +288,16 @@ public class SqlUpdateTests {
 		RequiredRowsUpdater pc = new RequiredRowsUpdater();
 		int rowsAffected = pc.run();
 
-		assertThat(rowsAffected).isEqualTo(3);
+		assertEquals(3, rowsAffected);
 	}
 
 	@Test
 	public void testNotRequiredRows() throws SQLException {
 		given(preparedStatement.executeUpdate()).willReturn(2);
 		given(connection.prepareStatement(UPDATE)).willReturn(preparedStatement);
+		thrown.expect(JdbcUpdateAffectedIncorrectNumberOfRowsException.class);
 		RequiredRowsUpdater pc = new RequiredRowsUpdater();
-		assertThatExceptionOfType(JdbcUpdateAffectedIncorrectNumberOfRowsException.class).isThrownBy(
-				pc::run);
+		pc.run();
 	}
 
 	private class Updater extends SqlUpdate {

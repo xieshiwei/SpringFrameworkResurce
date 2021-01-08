@@ -27,27 +27,10 @@ import org.springframework.util.StringUtils;
 /**
  * A data size, such as '12MB'.
  *
- * <p>This class models data size in terms of bytes and is immutable and thread-safe.
- *
- * <p>The terms and units used in this class are based on
- * <a href="https://en.wikipedia.org/wiki/Binary_prefix">binary prefixes</a>
- * indicating multiplication by powers of 2. Consult the following table and
- * the Javadoc for {@link DataUnit} for details.
- *
- * <p>
- * <table border="1">
- * <tr><th>Term</th><th>Data Size</th><th>Size in Bytes</th></tr>
- * <tr><td>byte</td><td>1B</td><td>1</td></tr>
- * <tr><td>kilobyte</td><td>1KB</td><td>1,024</td></tr>
- * <tr><td>megabyte</td><td>1MB</td><td>1,048,576</td></tr>
- * <tr><td>gigabyte</td><td>1GB</td><td>1,073,741,824</td></tr>
- * <tr><td>terabyte</td><td>1TB</td><td>1,099,511,627,776</td></tr>
- * </table>
+ * <p>This class models a size in terms of bytes and is immutable and thread-safe.
  *
  * @author Stephane Nicoll
- * @author Sam Brannen
  * @since 5.1
- * @see DataUnit
  */
 @SuppressWarnings("serial")
 public final class DataSize implements Comparable<DataSize>, Serializable {
@@ -60,22 +43,22 @@ public final class DataSize implements Comparable<DataSize>, Serializable {
 	/**
 	 * Bytes per Kilobyte.
 	 */
-	private static final long BYTES_PER_KB = 1024;
+	private static long BYTES_PER_KB = 1024;
 
 	/**
 	 * Bytes per Megabyte.
 	 */
-	private static final long BYTES_PER_MB = BYTES_PER_KB * 1024;
+	private static long BYTES_PER_MB = BYTES_PER_KB * 1024;
 
 	/**
 	 * Bytes per Gigabyte.
 	 */
-	private static final long BYTES_PER_GB = BYTES_PER_MB * 1024;
+	private static long BYTES_PER_GB = BYTES_PER_MB * 1024;
 
 	/**
 	 * Bytes per Terabyte.
 	 */
-	private static final long BYTES_PER_TB = BYTES_PER_GB * 1024;
+	private static long BYTES_PER_TB = BYTES_PER_GB * 1024;
 
 
 	private final long bytes;
@@ -165,7 +148,7 @@ public final class DataSize implements Comparable<DataSize>, Serializable {
 	 * the specified default {@link DataUnit} if no unit is specified.
 	 * <p>
 	 * The string starts with a number followed optionally by a unit matching one of the
-	 * supported {@linkplain DataUnit suffixes}.
+	 * supported {@link DataUnit suffixes}.
 	 * <p>
 	 * Examples:
 	 * <pre>
@@ -255,7 +238,7 @@ public final class DataSize implements Comparable<DataSize>, Serializable {
 
 
 	@Override
-	public boolean equals(@Nullable Object other) {
+	public boolean equals(Object other) {
 		if (this == other) {
 			return true;
 		}

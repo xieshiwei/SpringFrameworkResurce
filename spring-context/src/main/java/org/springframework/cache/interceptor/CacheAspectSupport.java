@@ -21,6 +21,7 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -361,7 +362,6 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	 * @return the result of the invocation
 	 * @see CacheOperationInvoker#invoke()
 	 */
-	@Nullable
 	protected Object invokeOperation(CacheOperationInvoker invoker) {
 		return invoker.invoke();
 	}
@@ -379,7 +379,7 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 				Object key = generateKey(context, CacheOperationExpressionEvaluator.NO_RESULT);
 				Cache cache = context.getCaches().iterator().next();
 				try {
-					return wrapCacheValue(method, handleSynchronizedGet(invoker, key, cache));
+					return wrapCacheValue(method, cache.get(key, () -> unwrapReturnValue(invokeOperation(invoker))));
 				}
 				catch (Cache.ValueRetrievalException ex) {
 					// Directly propagate ThrowableWrapper from the invoker,
@@ -402,7 +402,7 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 		Cache.ValueWrapper cacheHit = findCachedItem(contexts.get(CacheableOperation.class));
 
 		// Collect puts from any @Cacheable miss, if no cached item is found
-		List<CachePutRequest> cachePutRequests = new ArrayList<>();
+		List<CachePutRequest> cachePutRequests = new LinkedList<>();
 		if (cacheHit == null) {
 			collectPutRequests(contexts.get(CacheableOperation.class),
 					CacheOperationExpressionEvaluator.NO_RESULT, cachePutRequests);
@@ -437,22 +437,6 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	}
 
 	@Nullable
-	private Object handleSynchronizedGet(CacheOperationInvoker invoker, Object key, Cache cache) {
-		InvocationAwareResult invocationResult = new InvocationAwareResult();
-		Object result = cache.get(key, () -> {
-			invocationResult.invoked = true;
-			if (logger.isTraceEnabled()) {
-				logger.trace("No cache entry for key '" + key + "' in cache " + cache.getName());
-			}
-			return unwrapReturnValue(invokeOperation(invoker));
-		});
-		if (!invocationResult.invoked && logger.isTraceEnabled()) {
-			logger.trace("Cache entry for key '" + key + "' found in cache '" + cache.getName() + "'");
-		}
-		return result;
-	}
-
-	@Nullable
 	private Object wrapCacheValue(Method method, @Nullable Object cacheValue) {
 		if (method.getReturnType() == Optional.class &&
 				(cacheValue == null || cacheValue.getClass() != Optional.class)) {
@@ -462,7 +446,7 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	}
 
 	@Nullable
-	private Object unwrapReturnValue(@Nullable Object returnValue) {
+	private Object unwrapReturnValue(Object returnValue) {
 		return ObjectUtils.unwrapOptional(returnValue);
 	}
 
@@ -502,14 +486,14 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 		for (Cache cache : context.getCaches()) {
 			if (operation.isCacheWide()) {
 				logInvalidating(context, operation, null);
-				doClear(cache, operation.isBeforeInvocation());
+				doClear(cache);
 			}
 			else {
 				if (key == null) {
 					key = generateKey(context, result);
 				}
 				logInvalidating(context, operation, key);
-				doEvict(cache, key, operation.isBeforeInvocation());
+				doEvict(cache, key);
 			}
 		}
 	}
@@ -853,7 +837,7 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 		}
 
 		@Override
-		public boolean equals(@Nullable Object other) {
+		public boolean equals(Object other) {
 			if (this == other) {
 				return true;
 			}
@@ -883,15 +867,6 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 			}
 			return result;
 		}
-	}
-
-	/**
-	 * Internal holder class for recording that a cache method was invoked.
-	 */
-	private static class InvocationAwareResult {
-
-		boolean invoked;
-
 	}
 
 }

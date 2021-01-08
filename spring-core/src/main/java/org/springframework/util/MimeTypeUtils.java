@@ -38,7 +38,6 @@ import org.springframework.lang.Nullable;
  * @author Arjen Poutsma
  * @author Rossen Stoyanchev
  * @author Dimitrios Liapis
- * @author Brian Clozel
  * @author Sam Brannen
  * @since 4.0
  */
@@ -156,30 +155,25 @@ public abstract class MimeTypeUtils {
 	public static final String TEXT_XML_VALUE = "text/xml";
 
 
-	private static final ConcurrentLruCache<String, MimeType> cachedMimeTypes =
-			new ConcurrentLruCache<>(64, MimeTypeUtils::parseMimeTypeInternal);
-
 	@Nullable
 	private static volatile Random random;
 
 	static {
-		// Not using "parseMimeType" to avoid static init cost
-		ALL = new MimeType("*", "*");
-		APPLICATION_JSON = new MimeType("application", "json");
-		APPLICATION_OCTET_STREAM = new MimeType("application", "octet-stream");
-		APPLICATION_XML = new MimeType("application", "xml");
-		IMAGE_GIF = new MimeType("image", "gif");
-		IMAGE_JPEG = new MimeType("image", "jpeg");
-		IMAGE_PNG = new MimeType("image", "png");
-		TEXT_HTML = new MimeType("text", "html");
-		TEXT_PLAIN = new MimeType("text", "plain");
-		TEXT_XML = new MimeType("text", "xml");
+		ALL = MimeType.valueOf(ALL_VALUE);
+		APPLICATION_JSON = MimeType.valueOf(APPLICATION_JSON_VALUE);
+		APPLICATION_OCTET_STREAM = MimeType.valueOf(APPLICATION_OCTET_STREAM_VALUE);
+		APPLICATION_XML = MimeType.valueOf(APPLICATION_XML_VALUE);
+		IMAGE_GIF = MimeType.valueOf(IMAGE_GIF_VALUE);
+		IMAGE_JPEG = MimeType.valueOf(IMAGE_JPEG_VALUE);
+		IMAGE_PNG = MimeType.valueOf(IMAGE_PNG_VALUE);
+		TEXT_HTML = MimeType.valueOf(TEXT_HTML_VALUE);
+		TEXT_PLAIN = MimeType.valueOf(TEXT_PLAIN_VALUE);
+		TEXT_XML = MimeType.valueOf(TEXT_XML_VALUE);
 	}
 
 
 	/**
 	 * Parse the given String into a single {@code MimeType}.
-	 * Recently parsed {@code MimeType} are cached for further retrieval.
 	 * @param mimeType the string to parse
 	 * @return the mime type
 	 * @throws InvalidMimeTypeException if the string cannot be parsed
@@ -188,14 +182,7 @@ public abstract class MimeTypeUtils {
 		if (!StringUtils.hasLength(mimeType)) {
 			throw new InvalidMimeTypeException(mimeType, "'mimeType' must not be empty");
 		}
-		// do not cache multipart mime types with random boundaries
-		if (mimeType.startsWith("multipart")) {
-			return parseMimeTypeInternal(mimeType);
-		}
-		return cachedMimeTypes.get(mimeType);
-	}
 
-	private static MimeType parseMimeTypeInternal(String mimeType) {
 		int index = mimeType.indexOf(';');
 		String fullType = (index >= 0 ? mimeType.substring(0, index) : mimeType).trim();
 		if (fullType.isEmpty()) {
@@ -243,7 +230,7 @@ public abstract class MimeTypeUtils {
 				int eqIndex = parameter.indexOf('=');
 				if (eqIndex >= 0) {
 					String attribute = parameter.substring(0, eqIndex).trim();
-					String value = parameter.substring(eqIndex + 1).trim();
+					String value = parameter.substring(eqIndex + 1, parameter.length()).trim();
 					parameters.put(attribute, value);
 				}
 			}

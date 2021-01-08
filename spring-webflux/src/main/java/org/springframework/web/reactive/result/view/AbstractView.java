@@ -47,7 +47,6 @@ import org.springframework.web.server.ServerWebExchange;
  * Base class for {@link View} implementations.
  *
  * @author Rossen Stoyanchev
- * @author Sam Brannen
  * @since 5.0
  */
 public abstract class AbstractView implements View, BeanNameAware, ApplicationContextAware {
@@ -87,7 +86,7 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 
 	/**
 	 * Set the supported media types for this view.
-	 * <p>Default is {@code "text/html;charset=UTF-8"}.
+	 * Default is "text/html;charset=UTF-8".
 	 */
 	public void setSupportedMediaTypes(List<MediaType> supportedMediaTypes) {
 		Assert.notEmpty(supportedMediaTypes, "MediaType List must not be empty");
@@ -96,7 +95,7 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 	}
 
 	/**
-	 * Get the configured media types supported by this view.
+	 * Return the configured media types supported by this view.
 	 */
 	@Override
 	public List<MediaType> getSupportedMediaTypes() {
@@ -106,7 +105,7 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 	/**
 	 * Set the default charset for this view, used when the
 	 * {@linkplain #setSupportedMediaTypes(List) content type} does not contain one.
-	 * <p>Default is {@linkplain StandardCharsets#UTF_8 UTF 8}.
+	 * Default is {@linkplain StandardCharsets#UTF_8 UTF 8}.
 	 */
 	public void setDefaultCharset(Charset defaultCharset) {
 		Assert.notNull(defaultCharset, "'defaultCharset' must not be null");
@@ -114,7 +113,7 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 	}
 
 	/**
-	 * Get the default charset, used when the
+	 * Return the default charset, used when the
 	 * {@linkplain #setSupportedMediaTypes(List) content type} does not contain one.
 	 */
 	public Charset getDefaultCharset() {
@@ -122,15 +121,15 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 	}
 
 	/**
-	 * Set the name of the {@code RequestContext} attribute for this view.
-	 * <p>Default is none ({@code null}).
+	 * Set the name of the RequestContext attribute for this view.
+	 * Default is none.
 	 */
 	public void setRequestContextAttribute(@Nullable String requestContextAttribute) {
 		this.requestContextAttribute = requestContextAttribute;
 	}
 
 	/**
-	 * Get the name of the {@code RequestContext} attribute for this view, if any.
+	 * Return the name of the RequestContext attribute, if any.
 	 */
 	@Nullable
 	public String getRequestContextAttribute() {
@@ -147,8 +146,8 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 	}
 
 	/**
-	 * Get the view's name.
-	 * <p>Should never be {@code null} if the view was correctly configured.
+	 * Return the view's name. Should never be {@code null}, if the view was
+	 * correctly configured.
 	 */
 	@Nullable
 	public String getBeanName() {
@@ -166,10 +165,9 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 	}
 
 	/**
-	 * Obtain the {@link ApplicationContext} for actual use.
-	 * @return the {@code ApplicationContext} (never {@code null})
-	 * @throws IllegalStateException if the ApplicationContext cannot be obtained
-	 * @see #getApplicationContext()
+	 * Obtain the ApplicationContext for actual use.
+	 * @return the ApplicationContext (never {@code null})
+	 * @throws IllegalStateException in case of no ApplicationContext set
 	 */
 	protected final ApplicationContext obtainApplicationContext() {
 		ApplicationContext applicationContext = getApplicationContext();
@@ -180,12 +178,12 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 
 	/**
 	 * Prepare the model to render.
-	 * @param model a map with attribute names as keys and corresponding model
-	 * objects as values (the map can also be {@code null} in case of an empty model)
-	 * @param contentType the content type selected to render with, which should
-	 * match one of the {@link #getSupportedMediaTypes() supported media types}
+	 * @param model a Map with name Strings as keys and corresponding model
+	 * objects as values (Map can also be {@code null} in case of empty model)
+	 * @param contentType the content type selected to render with which should
+	 * match one of the {@link #getSupportedMediaTypes() supported media types}.
 	 * @param exchange the current exchange
-	 * @return a {@code Mono} that represents when and if rendering succeeds
+	 * @return {@code Mono} to represent when and if rendering succeeds
 	 */
 	@Override
 	public Mono<Void> render(@Nullable Map<String, ?> model, @Nullable MediaType contentType,
@@ -241,9 +239,9 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 	 * Use the configured {@link ReactiveAdapterRegistry} to adapt asynchronous
 	 * attributes to {@code Mono<T>} or {@code Mono<List<T>>} and then wait to
 	 * resolve them into actual values. When the returned {@code Mono<Void>}
-	 * completes, the asynchronous attributes in the model will have been
+	 * completes, the asynchronous attributes in the model would have been
 	 * replaced with their corresponding resolved values.
-	 * @return result a {@code Mono} that completes when the model is ready
+	 * @return result {@code Mono} that completes when the model is ready
 	 * @since 5.1.8
 	 */
 	protected Mono<Void> resolveAsyncAttributes(Map<String, Object> model, ServerWebExchange exchange) {
@@ -301,7 +299,7 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 	 * replaced with their corresponding resolved values.
 	 * @return result {@code Mono} that completes when the model is ready
 	 * @deprecated as of 5.1.8 this method is still invoked but it is a no-op.
-	 * Please use {@link #resolveAsyncAttributes(Map, ServerWebExchange)}
+	 * Please, use {@link #resolveAsyncAttributes(Map, ServerWebExchange)}
 	 * instead. It is invoked after this one and does the actual work.
 	 */
 	@Deprecated
@@ -310,15 +308,14 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 	}
 
 	/**
-	 * Create a {@link RequestContext} to expose under the
-	 * {@linkplain #setRequestContextAttribute specified attribute name}.
-	 * <p>The default implementation creates a standard {@code RequestContext}
-	 * instance for the given exchange and model.
-	 * <p>Can be overridden in subclasses to create custom instances.
-	 * @param exchange the current exchange
-	 * @param model a combined output Map (never {@code null}), with dynamic values
-	 * taking precedence over static attributes
-	 * @return the {@code RequestContext} instance
+	 * Create a RequestContext to expose under the specified attribute name.
+	 * <p>The default implementation creates a standard RequestContext instance
+	 * for the given request and model. Can be overridden in subclasses for
+	 * custom instances.
+	 * @param exchange current exchange
+	 * @param model combined output Map (never {@code null}),
+	 * with dynamic values taking precedence over static attributes
+	 * @return the RequestContext instance
 	 * @see #setRequestContextAttribute
 	 */
 	protected RequestContext createRequestContext(ServerWebExchange exchange, Map<String, Object> model) {
@@ -326,12 +323,12 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 	}
 
 	/**
-	 * Get the {@link RequestDataValueProcessor} to use.
+	 * Return the {@link RequestDataValueProcessor} to use.
 	 * <p>The default implementation looks in the {@link #getApplicationContext()
-	 * ApplicationContext} for a {@code RequestDataValueProcessor} bean with
+	 * Spring configuration} for a {@code RequestDataValueProcessor} bean with
 	 * the name {@link #REQUEST_DATA_VALUE_PROCESSOR_BEAN_NAME}.
-	 * @return the {@code RequestDataValueProcessor}, or {@code null} if there is
-	 * none in the application context
+	 * @return the RequestDataValueProcessor, or null if there is none at the
+	 * application context.
 	 */
 	@Nullable
 	protected RequestDataValueProcessor getRequestDataValueProcessor() {
@@ -346,10 +343,10 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 	 * Subclasses must implement this method to actually render the view.
 	 * @param renderAttributes combined output Map (never {@code null}),
 	 * with dynamic values taking precedence over static attributes
-	 * @param contentType the content type selected to render with, which should
-	 * match one of the {@linkplain #getSupportedMediaTypes() supported media types}
-	 * @param exchange current exchange
-	 * @return a {@code Mono} that represents when and if rendering succeeds
+	 * @param contentType the content type selected to render with which should
+	 * match one of the {@link #getSupportedMediaTypes() supported media types}.
+	 *@param exchange current exchange  @return {@code Mono} to represent when
+	 * and if rendering succeeds
 	 */
 	protected abstract Mono<Void> renderInternal(Map<String, Object> renderAttributes,
 			@Nullable MediaType contentType, ServerWebExchange exchange);

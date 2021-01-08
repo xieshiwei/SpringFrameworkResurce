@@ -16,7 +16,6 @@
 
 package org.springframework.jdbc.support;
 
-import java.sql.DatabaseMetaData;
 import java.util.Collections;
 import java.util.Map;
 
@@ -213,11 +212,10 @@ public class SQLErrorCodesFactory {
 	 * @param dataSource the {@code DataSource} identifying the database
 	 * @return the corresponding {@code SQLErrorCodes} object,
 	 * or {@code null} in case of a JDBC meta-data access problem
-	 * @since 5.2.9
 	 * @see java.sql.DatabaseMetaData#getDatabaseProductName()
 	 */
 	@Nullable
-	public SQLErrorCodes resolveErrorCodes(DataSource dataSource) {
+	SQLErrorCodes resolveErrorCodes(DataSource dataSource) {
 		Assert.notNull(dataSource, "DataSource must not be null");
 		if (logger.isDebugEnabled()) {
 			logger.debug("Looking up default SQLErrorCodes for DataSource [" + identify(dataSource) + "]");
@@ -232,8 +230,7 @@ public class SQLErrorCodesFactory {
 				if (sec == null) {
 					// We could not find it - got to look it up.
 					try {
-						String name = JdbcUtils.extractDatabaseMetaData(dataSource,
-								DatabaseMetaData::getDatabaseProductName);
+						String name = JdbcUtils.extractDatabaseMetaData(dataSource, "getDatabaseProductName");
 						if (StringUtils.hasLength(name)) {
 							return registerDatabase(dataSource, name);
 						}

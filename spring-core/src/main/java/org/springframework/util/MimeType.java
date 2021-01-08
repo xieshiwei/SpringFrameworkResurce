@@ -103,12 +103,6 @@ public class MimeType implements Comparable<MimeType>, Serializable {
 
 	private final Map<String, String> parameters;
 
-	@Nullable
-	private Charset resolvedCharset;
-
-	@Nullable
-	private volatile String toStringValue;
-
 
 	/**
 	 * Create a new {@code MimeType} for the given primary type.
@@ -141,7 +135,6 @@ public class MimeType implements Comparable<MimeType>, Serializable {
 	 */
 	public MimeType(String type, String subtype, Charset charset) {
 		this(type, subtype, Collections.singletonMap(PARAM_CHARSET, charset.name()));
-		this.resolvedCharset = charset;
 	}
 
 	/**
@@ -154,7 +147,6 @@ public class MimeType implements Comparable<MimeType>, Serializable {
 	 */
 	public MimeType(MimeType other, Charset charset) {
 		this(other.getType(), other.getSubtype(), addCharsetParameter(charset, other.getParameters()));
-		this.resolvedCharset = charset;
 	}
 
 	/**
@@ -196,20 +188,6 @@ public class MimeType implements Comparable<MimeType>, Serializable {
 	}
 
 	/**
-	 * Copy-constructor that copies the type, subtype and parameters of the given {@code MimeType},
-	 * skipping checks performed in other constructors.
-	 * @param other the other MimeType
-	 * @since 5.3
-	 */
-	protected MimeType(MimeType other) {
-		this.type = other.type;
-		this.subtype = other.subtype;
-		this.parameters = other.parameters;
-		this.resolvedCharset = other.resolvedCharset;
-		this.toStringValue = other.toStringValue;
-	}
-
-	/**
 	 * Checks the given token string for illegal characters, as defined in RFC 2616,
 	 * section 2.2.
 	 * @throws IllegalArgumentException in case of illegal characters
@@ -229,9 +207,7 @@ public class MimeType implements Comparable<MimeType>, Serializable {
 		Assert.hasLength(value, "'value' must not be empty");
 		checkToken(attribute);
 		if (PARAM_CHARSET.equals(attribute)) {
-			if (this.resolvedCharset == null) {
-				this.resolvedCharset = Charset.forName(unquote(value));
-			}
+			Charset.forName(unquote(value));
 		}
 		else if (!isQuotedString(value)) {
 			checkToken(value);
@@ -293,26 +269,14 @@ public class MimeType implements Comparable<MimeType>, Serializable {
 	}
 
 	/**
-	 * Return the subtype suffix as defined in RFC 6839.
-	 * @since 5.3
-	 */
-	@Nullable
-	public String getSubtypeSuffix() {
-		int suffixIndex = this.subtype.lastIndexOf('+');
-		if (suffixIndex != -1 && this.subtype.length() > suffixIndex) {
-			return this.subtype.substring(suffixIndex + 1);
-		}
-		return null;
-	}
-
-	/**
 	 * Return the character set, as indicated by a {@code charset} parameter, if any.
 	 * @return the character set, or {@code null} if not available
 	 * @since 4.3
 	 */
 	@Nullable
 	public Charset getCharset() {
-		return this.resolvedCharset;
+		String charset = getParameter(PARAM_CHARSET);
+		return (charset != null ? Charset.forName(unquote(charset)) : null);
 	}
 
 	/**
@@ -397,17 +361,22 @@ public class MimeType implements Comparable<MimeType>, Serializable {
 			if (getSubtype().equals(other.getSubtype())) {
 				return true;
 			}
+			// Wildcard with suffix? e.g. application/*+xml
 			if (isWildcardSubtype() || other.isWildcardSubtype()) {
-				String thisSuffix = getSubtypeSuffix();
-				String otherSuffix = other.getSubtypeSuffix();
-				if (getSubtype().equals(WILDCARD_TYPE) || other.getSubtype().equals(WILDCARD_TYPE)) {
+				int thisPlusIdx = getSubtype().lastIndexOf('+');
+				int otherPlusIdx = other.getSubtype().lastIndexOf('+');
+				if (thisPlusIdx == -1 && otherPlusIdx == -1) {
 					return true;
 				}
-				else if (isWildcardSubtype() && thisSuffix != null) {
-					return (thisSuffix.equals(other.getSubtype()) || thisSuffix.equals(otherSuffix));
-				}
-				else if (other.isWildcardSubtype() && otherSuffix != null) {
-					return (this.getSubtype().equals(otherSuffix) || otherSuffix.equals(thisSuffix));
+				else if (thisPlusIdx != -1 && otherPlusIdx != -1) {
+					String thisSubtypeNoSuffix = getSubtype().substring(0, thisPlusIdx);
+					String otherSubtypeNoSuffix = other.getSubtype().substring(0, otherPlusIdx);
+					String thisSubtypeSuffix = getSubtype().substring(thisPlusIdx + 1);
+					String otherSubtypeSuffix = other.getSubtype().substring(otherPlusIdx + 1);
+					if (thisSubtypeSuffix.equals(otherSubtypeSuffix) &&
+							(WILDCARD_TYPE.equals(thisSubtypeNoSuffix) || WILDCARD_TYPE.equals(otherSubtypeNoSuffix))) {
+						return true;
+					}
 				}
 			}
 		}
@@ -447,7 +416,7 @@ public class MimeType implements Comparable<MimeType>, Serializable {
 
 
 	@Override
-	public boolean equals(@Nullable Object other) {
+	public boolean equals(Object other) {
 		if (this == other) {
 			return true;
 		}
@@ -499,14 +468,9 @@ public class MimeType implements Comparable<MimeType>, Serializable {
 
 	@Override
 	public String toString() {
-		String value = this.toStringValue;
-		if (value == null) {
-			StringBuilder builder = new StringBuilder();
-			appendTo(builder);
-			value = builder.toString();
-			this.toStringValue = value;
-		}
-		return value;
+		StringBuilder builder = new StringBuilder();
+		appendTo(builder);
+		return builder.toString();
 	}
 
 	protected void appendTo(StringBuilder builder) {

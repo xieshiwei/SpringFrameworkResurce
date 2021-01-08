@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.web.filter;
 
 import java.io.IOException;
@@ -25,19 +24,19 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
-import org.springframework.web.testfixture.servlet.MockFilterChain;
-import org.springframework.web.testfixture.servlet.MockHttpServletRequest;
-import org.springframework.web.testfixture.servlet.MockHttpServletResponse;
+import org.springframework.mock.web.test.MockFilterChain;
+import org.springframework.mock.web.test.MockHttpServletRequest;
+import org.springframework.mock.web.test.MockHttpServletResponse;
 import org.springframework.web.util.WebUtils;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Unit tests for {@link OncePerRequestFilter}.
- *
  * @author Rossen Stoyanchev
  * @since 5.1.9
  */
@@ -50,7 +49,7 @@ public class OncePerRequestFilterTests {
 	private MockFilterChain filterChain;
 
 
-	@BeforeEach
+	@Before
 	@SuppressWarnings("serial")
 	public void setup() throws Exception {
 		this.request = new MockHttpServletRequest();
@@ -68,16 +67,16 @@ public class OncePerRequestFilterTests {
 		this.request.setAttribute(this.filter.getAlreadyFilteredAttributeName(), Boolean.TRUE);
 
 		this.filter.doFilter(this.request, new MockHttpServletResponse(), this.filterChain);
-		assertThat(this.filter.didFilter).isFalse();
-		assertThat(this.filter.didFilterNestedErrorDispatch).isFalse();
+		assertFalse(this.filter.didFilter);
+		assertFalse(this.filter.didFilterNestedErrorDispatch);
 
 		// Remove already filtered
 		this.request.removeAttribute(this.filter.getAlreadyFilteredAttributeName());
 		this.filter.reset();
 
 		this.filter.doFilter(this.request, new MockHttpServletResponse(), this.filterChain);
-		assertThat(this.filter.didFilter).isTrue();
-		assertThat(this.filter.didFilterNestedErrorDispatch).isFalse();
+		assertTrue(this.filter.didFilter);
+		assertFalse(this.filter.didFilterNestedErrorDispatch);
 	}
 
 	@Test
@@ -86,8 +85,8 @@ public class OncePerRequestFilterTests {
 		initErrorDispatch();
 
 		this.filter.doFilter(this.request, new MockHttpServletResponse(), this.filterChain);
-		assertThat(this.filter.didFilter).isFalse();
-		assertThat(this.filter.didFilterNestedErrorDispatch).isFalse();
+		assertFalse(this.filter.didFilter);
+		assertFalse(this.filter.didFilterNestedErrorDispatch);
 	}
 
 	@Test
@@ -97,8 +96,8 @@ public class OncePerRequestFilterTests {
 		this.request.setAttribute(this.filter.getAlreadyFilteredAttributeName(), Boolean.TRUE);
 
 		this.filter.doFilter(this.request, new MockHttpServletResponse(), this.filterChain);
-		assertThat(this.filter.didFilter).isFalse();
-		assertThat(this.filter.didFilterNestedErrorDispatch).isFalse();
+		assertFalse(this.filter.didFilter);
+		assertFalse(this.filter.didFilterNestedErrorDispatch);
 	}
 
 	@Test // gh-23196
@@ -111,8 +110,8 @@ public class OncePerRequestFilterTests {
 		initErrorDispatch();
 
 		this.filter.doFilter(this.request, new MockHttpServletResponse(), this.filterChain);
-		assertThat(this.filter.didFilter).isFalse();
-		assertThat(this.filter.didFilterNestedErrorDispatch).isTrue();
+		assertFalse(this.filter.didFilter);
+		assertTrue(this.filter.didFilterNestedErrorDispatch);
 	}
 
 	private void initErrorDispatch() {
@@ -134,8 +133,25 @@ public class OncePerRequestFilterTests {
 		private boolean didFilterNestedErrorDispatch;
 
 
+		public void setShouldNotFilter(boolean shouldNotFilter) {
+			this.shouldNotFilter = shouldNotFilter;
+		}
+
+		public void setShouldNotFilterAsyncDispatch(boolean shouldNotFilterAsyncDispatch) {
+			this.shouldNotFilterAsyncDispatch = shouldNotFilterAsyncDispatch;
+		}
+
 		public void setShouldNotFilterErrorDispatch(boolean shouldNotFilterErrorDispatch) {
 			this.shouldNotFilterErrorDispatch = shouldNotFilterErrorDispatch;
+		}
+
+
+		public boolean didFilter() {
+			return this.didFilter;
+		}
+
+		public boolean didFilterNestedErrorDispatch() {
+			return this.didFilterNestedErrorDispatch;
 		}
 
 		public void reset() {

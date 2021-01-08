@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.springframework.lang.Nullable;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.util.UrlPathHelper;
 
@@ -58,12 +57,10 @@ public class ResourceUrlEncodingFilter extends GenericFilterBean {
 		if (!(request instanceof HttpServletRequest) || !(response instanceof HttpServletResponse)) {
 			throw new ServletException("ResourceUrlEncodingFilter only supports HTTP requests");
 		}
-
 		ResourceUrlEncodingRequestWrapper wrappedRequest =
 				new ResourceUrlEncodingRequestWrapper((HttpServletRequest) request);
 		ResourceUrlEncodingResponseWrapper wrappedResponse =
 				new ResourceUrlEncodingResponseWrapper(wrappedRequest, (HttpServletResponse) response);
-
 		filterChain.doFilter(wrappedRequest, wrappedResponse);
 	}
 
@@ -103,7 +100,7 @@ public class ResourceUrlEncodingFilter extends GenericFilterBean {
 					throw new LookupPathIndexException(lookupPath, requestUri);
 				}
 				this.prefixLookupPath = requestUri.substring(0, this.indexLookupPath);
-				if (StringUtils.matchesCharacter(lookupPath, '/') && !StringUtils.matchesCharacter(requestUri, '/')) {
+				if ("/".equals(lookupPath) && !"/".equals(requestUri)) {
 					String contextPath = pathHelper.getContextPath(this);
 					if (requestUri.equals(contextPath)) {
 						this.indexLookupPath = requestUri.length();

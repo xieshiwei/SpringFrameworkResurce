@@ -21,21 +21,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mockito;
 import reactor.test.StepVerifier;
 
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.mock.web.test.server.MockServerWebExchange;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.resource.EncodedResourceResolver.EncodedResource;
-import org.springframework.web.reactive.resource.GzipSupport.GzippedFiles;
-import org.springframework.web.testfixture.server.MockServerWebExchange;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.web.testfixture.http.server.reactive.MockServerHttpRequest.get;
+import static org.junit.Assert.*;
+import static org.springframework.mock.http.server.reactive.test.MockServerHttpRequest.*;
 
 /**
  * Unit tests for {@link CssLinkResourceTransformer}.
@@ -43,13 +41,12 @@ import static org.springframework.web.testfixture.http.server.reactive.MockServe
  * @author Rossen Stoyanchev
  * @author Sam Brannen
  */
-@ExtendWith(GzipSupport.class)
 public class CssLinkResourceTransformerTests {
 
 	private ResourceTransformerChain transformerChain;
 
 
-	@BeforeEach
+	@Before
 	public void setup() {
 		VersionResourceResolver versionResolver = new VersionResourceResolver();
 		versionResolver.setStrategyMap(Collections.singletonMap("/**", new ContentVersionStrategy()));
@@ -93,7 +90,7 @@ public class CssLinkResourceTransformerTests {
 				.consumeNextWith(transformedResource -> {
 					String result = new String(transformedResource.getByteArray(), StandardCharsets.UTF_8);
 					result = StringUtils.deleteAny(result, "\r");
-					assertThat(result).isEqualTo(expected);
+					assertEquals(expected, result);
 				})
 				.expectComplete()
 				.verify();
@@ -105,7 +102,7 @@ public class CssLinkResourceTransformerTests {
 		Resource expected = getResource("foo.css");
 
 		StepVerifier.create(this.transformerChain.transform(exchange, expected))
-				.consumeNextWith(resource -> assertThat(resource).isSameAs(expected))
+				.consumeNextWith(resource -> assertSame(expected, resource))
 				.expectComplete().verify();
 	}
 
@@ -127,7 +124,7 @@ public class CssLinkResourceTransformerTests {
 				.consumeNextWith(transformedResource -> {
 					String result = new String(transformedResource.getByteArray(), StandardCharsets.UTF_8);
 					result = StringUtils.deleteAny(result, "\r");
-					assertThat(result).isEqualTo(expected);
+					assertEquals(expected, result);
 				})
 				.expectComplete()
 				.verify();
@@ -150,8 +147,9 @@ public class CssLinkResourceTransformerTests {
 	}
 
 	@Test
-	public void transformSkippedForGzippedResource(GzippedFiles gzippedFiles) throws Exception {
-		gzippedFiles.create("main.css");
+	public void transformSkippedForGzippedResource() throws Exception {
+
+		EncodedResourceResolverTests.createGzippedFile("main.css");
 
 		MockServerWebExchange exchange = MockServerWebExchange.from(get("/static/main.css"));
 		Resource resource = getResource("main.css");
@@ -177,7 +175,7 @@ public class CssLinkResourceTransformerTests {
 				.consumeNextWith(transformedResource -> {
 					String result = new String(transformedResource.getByteArray(), StandardCharsets.UTF_8);
 					result = StringUtils.deleteAny(result, "\r");
-					assertThat(result).isEqualTo(expected);
+					assertEquals(expected, result);
 				})
 				.expectComplete()
 				.verify();

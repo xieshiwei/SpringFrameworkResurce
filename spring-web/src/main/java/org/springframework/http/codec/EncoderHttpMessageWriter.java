@@ -79,8 +79,8 @@ public class EncoderHttpMessageWriter<T> implements HttpMessageWriter<T> {
 	private static void initLogger(Encoder<?> encoder) {
 		if (encoder instanceof AbstractEncoder &&
 				encoder.getClass().getName().startsWith("org.springframework.core.codec")) {
-			Log logger = HttpLogging.forLog(((AbstractEncoder<?>) encoder).getLogger());
-			((AbstractEncoder<?>) encoder).setLogger(logger);
+			Log logger = HttpLogging.forLog(((AbstractEncoder) encoder).getLogger());
+			((AbstractEncoder) encoder).setLogger(logger);
 		}
 	}
 
@@ -128,7 +128,8 @@ public class EncoderHttpMessageWriter<T> implements HttpMessageWriter<T> {
 						message.getHeaders().setContentLength(buffer.readableByteCount());
 						return message.writeWith(Mono.just(buffer)
 								.doOnDiscard(PooledDataBuffer.class, DataBufferUtils::release));
-					});
+					})
+					.doOnDiscard(PooledDataBuffer.class, DataBufferUtils::release);
 		}
 
 		if (isStreamingMediaType(contentType)) {

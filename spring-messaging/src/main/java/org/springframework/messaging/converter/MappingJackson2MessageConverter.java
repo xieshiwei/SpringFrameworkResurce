@@ -22,6 +22,8 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.fasterxml.jackson.annotation.JsonView;
@@ -35,6 +37,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
+import org.springframework.core.GenericTypeResolver;
 import org.springframework.core.MethodParameter;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
@@ -52,7 +55,7 @@ import org.springframework.util.MimeType;
  * <li>{@link DeserializationFeature#FAIL_ON_UNKNOWN_PROPERTIES} is disabled</li>
  * </ul>
  *
- * <p>Compatible with Jackson 2.9 to 2.12, as of Spring 5.3.
+ * <p>Compatible with Jackson 2.9 and higher, as of Spring 5.1.
  *
  * @author Rossen Stoyanchev
  * @author Juergen Hoeller
@@ -72,7 +75,7 @@ public class MappingJackson2MessageConverter extends AbstractMessageConverter {
 	 * the {@code application/json} MIME type with {@code UTF-8} character set.
 	 */
 	public MappingJackson2MessageConverter() {
-		super(new MimeType("application", "json"));
+		super(new MimeType("application", "json", StandardCharsets.UTF_8));
 		this.objectMapper = initObjectMapper();
 	}
 
@@ -83,7 +86,7 @@ public class MappingJackson2MessageConverter extends AbstractMessageConverter {
 	 * @since 4.1.5
 	 */
 	public MappingJackson2MessageConverter(MimeType... supportedMimeTypes) {
-		super(supportedMimeTypes);
+		super(Arrays.asList(supportedMimeTypes));
 		this.objectMapper = initObjectMapper();
 	}
 
@@ -207,7 +210,7 @@ public class MappingJackson2MessageConverter extends AbstractMessageConverter {
 	@Override
 	@Nullable
 	protected Object convertFromInternal(Message<?> message, Class<?> targetClass, @Nullable Object conversionHint) {
-		JavaType javaType = this.objectMapper.constructType(getResolvedType(targetClass, conversionHint));
+		JavaType javaType = getJavaType(targetClass, conversionHint);
 		Object payload = message.getPayload();
 		Class<?> view = getSerializationView(conversionHint);
 		try {
@@ -237,6 +240,21 @@ public class MappingJackson2MessageConverter extends AbstractMessageConverter {
 		}
 	}
 
+	private JavaType getJavaType(Class<?> targetClass, @Nullable Object conversionHint) {
+		if (conversionHint instanceof MethodParameter) {
+			MethodParameter param = (MethodParameter) conversionHint;
+			param = param.nestedIfOptional();
+			if (Message.class.isAssignableFrom(param.getParameterType())) {
+				param = param.nested();
+			}
+			Type genericParameterType = param.getNestedGenericParameterType();
+			Class<?> contextClass = param.getContainingClass();
+			Type type = GenericTypeResolver.resolveType(genericParameterType, contextClass);
+			return this.objectMapper.constructType(type);
+		}
+		return this.objectMapper.constructType(targetClass);
+	}
+
 	@Override
 	@Nullable
 	protected Object convertToInternal(Object payload, @Nullable MessageHeaders headers,
@@ -247,15 +265,14 @@ public class MappingJackson2MessageConverter extends AbstractMessageConverter {
 			if (byte[].class == getSerializedPayloadClass()) {
 				ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
 				JsonEncoding encoding = getJsonEncoding(getMimeType(headers));
-				try (JsonGenerator generator = this.objectMapper.getFactory().createGenerator(out, encoding)) {
-					if (view != null) {
-						this.objectMapper.writerWithView(view).writeValue(generator, payload);
-					}
-					else {
-						this.objectMapper.writeValue(generator, payload);
-					}
-					payload = out.toByteArray();
+				JsonGenerator generator = this.objectMapper.getFactory().createGenerator(out, encoding);
+				if (view != null) {
+					this.objectMapper.writerWithView(view).writeValue(generator, payload);
 				}
+				else {
+					this.objectMapper.writeValue(generator, payload);
+				}
+				payload = out.toByteArray();
 			}
 			else {
 				// Assuming a text-based target payload

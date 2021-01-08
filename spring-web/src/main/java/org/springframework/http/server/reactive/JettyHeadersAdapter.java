@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,13 +31,10 @@ import org.eclipse.jetty.http.HttpFields;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.lang.Nullable;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 
 /**
  * {@code MultiValueMap} implementation for wrapping Jetty HTTP headers.
- *
- * <p>There is a duplicate of this class in the client package!
  *
  * @author Brian Clozel
  * @since 5.1.1
@@ -83,7 +81,7 @@ class JettyHeadersAdapter implements MultiValueMap<String, String> {
 
 	@Override
 	public Map<String, String> toSingleValueMap() {
-		Map<String, String> singleValueMap = CollectionUtils.newLinkedHashMap(this.headers.size());
+		Map<String, String> singleValueMap = new LinkedHashMap<>(this.headers.size());
 		Iterator<HttpField> iterator = this.headers.iterator();
 		iterator.forEachRemaining(field -> {
 			if (!singleValueMap.containsKey(field.getName())) {

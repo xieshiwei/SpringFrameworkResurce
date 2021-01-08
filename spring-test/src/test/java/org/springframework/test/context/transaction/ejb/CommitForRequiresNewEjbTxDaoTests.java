@@ -32,7 +32,7 @@ import org.springframework.test.context.transaction.ejb.dao.RequiresNewEjbTxTest
  */
 @ContextConfiguration("requires-new-tx-config.xml")
 @Commit
-class CommitForRequiresNewEjbTxDaoTests extends AbstractEjbTxDaoTests {
+public class CommitForRequiresNewEjbTxDaoTests extends AbstractEjbTxDaoTests {
 
 	/* test methods in superclass */
 

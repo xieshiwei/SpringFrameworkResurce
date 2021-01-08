@@ -591,7 +591,7 @@ public abstract class WebUtils {
 	 * either via a button (directly with name) or via an image (name + ".x" or
 	 * name + ".y").
 	 * @param request current HTTP request
-	 * @param name the name of the parameter
+	 * @param name name of the parameter
 	 * @return if the parameter was sent
 	 * @see #SUBMIT_IMAGE_SUFFIXES
 	 */
@@ -696,7 +696,7 @@ public abstract class WebUtils {
 		}
 		while (paramNames != null && paramNames.hasMoreElements()) {
 			String paramName = paramNames.nextElement();
-			if (prefix.isEmpty() || paramName.startsWith(prefix)) {
+			if ("".equals(prefix) || paramName.startsWith(prefix)) {
 				String unprefixed = paramName.substring(prefix.length());
 				String[] values = request.getParameterValues(paramName);
 				if (values == null || values.length == 0) {

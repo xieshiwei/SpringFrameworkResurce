@@ -180,11 +180,8 @@ public class ResourceUrlProvider implements ApplicationListener<ContextRefreshed
 
 	private int getLookupPathIndex(HttpServletRequest request) {
 		UrlPathHelper pathHelper = getUrlPathHelper();
-		if (request.getAttribute(UrlPathHelper.PATH_ATTRIBUTE) == null) {
-			pathHelper.resolveAndCacheLookupPath(request);
-		}
 		String requestUri = pathHelper.getRequestUri(request);
-		String lookupPath = UrlPathHelper.getResolvedLookupPath(request);
+		String lookupPath = pathHelper.getLookupPathForRequest(request);
 		return requestUri.indexOf(lookupPath);
 	}
 

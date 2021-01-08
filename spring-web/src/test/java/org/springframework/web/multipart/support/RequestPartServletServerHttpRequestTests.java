@@ -22,19 +22,19 @@ import java.nio.charset.StandardCharsets;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.mock.web.test.MockMultipartFile;
+import org.springframework.mock.web.test.MockMultipartHttpServletRequest;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.testfixture.servlet.MockMultipartFile;
-import org.springframework.web.testfixture.servlet.MockMultipartHttpServletRequest;
-import org.springframework.web.testfixture.servlet.MockPart;
+import org.springframework.mock.web.test.MockPart;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
 
 /**
  * @author Rossen Stoyanchev
@@ -51,7 +51,7 @@ public class RequestPartServletServerHttpRequestTests {
 		ServerHttpRequest request = new RequestPartServletServerHttpRequest(this.mockRequest, "part");
 		this.mockRequest.setMethod("POST");
 
-		assertThat(request.getMethod()).isEqualTo(HttpMethod.POST);
+		assertEquals(HttpMethod.POST, request.getMethod());
 	}
 
 	@Test
@@ -60,12 +60,12 @@ public class RequestPartServletServerHttpRequestTests {
 		ServerHttpRequest request = new RequestPartServletServerHttpRequest(this.mockRequest, "part");
 
 		URI uri = new URI("https://example.com/path?query");
-		this.mockRequest.setScheme(uri.getScheme());
+		this.mockRequest.setScheme("https");
 		this.mockRequest.setServerName(uri.getHost());
 		this.mockRequest.setServerPort(uri.getPort());
 		this.mockRequest.setRequestURI(uri.getPath());
 		this.mockRequest.setQueryString(uri.getQuery());
-		assertThat(request.getURI()).isEqualTo(uri);
+		assertEquals(uri, request.getURI());
 	}
 
 	@Test
@@ -75,8 +75,8 @@ public class RequestPartServletServerHttpRequestTests {
 		ServerHttpRequest request = new RequestPartServletServerHttpRequest(this.mockRequest, "part");
 
 		HttpHeaders headers = request.getHeaders();
-		assertThat(headers).isNotNull();
-		assertThat(headers.getContentType()).isEqualTo(MediaType.APPLICATION_JSON);
+		assertNotNull(headers);
+		assertEquals(MediaType.APPLICATION_JSON, headers.getContentType());
 	}
 
 	@Test
@@ -87,7 +87,7 @@ public class RequestPartServletServerHttpRequestTests {
 		ServerHttpRequest request = new RequestPartServletServerHttpRequest(this.mockRequest, "part");
 
 		byte[] result = FileCopyUtils.copyToByteArray(request.getBody());
-		assertThat(result).isEqualTo(bytes);
+		assertArrayEquals(bytes, result);
 	}
 
 	@Test  // SPR-13317
@@ -99,7 +99,7 @@ public class RequestPartServletServerHttpRequestTests {
 		ServerHttpRequest request = new RequestPartServletServerHttpRequest(wrapped, "part");
 
 		byte[] result = FileCopyUtils.copyToByteArray(request.getBody());
-		assertThat(result).isEqualTo(bytes);
+		assertArrayEquals(bytes, result);
 	}
 
 	@Test  // SPR-13096
@@ -117,7 +117,7 @@ public class RequestPartServletServerHttpRequestTests {
 		mockRequest.setParameter("part", new String(bytes, StandardCharsets.ISO_8859_1));
 		ServerHttpRequest request = new RequestPartServletServerHttpRequest(mockRequest, "part");
 		byte[] result = FileCopyUtils.copyToByteArray(request.getBody());
-		assertThat(result).isEqualTo(bytes);
+		assertArrayEquals(bytes, result);
 	}
 
 	@Test
@@ -136,7 +136,7 @@ public class RequestPartServletServerHttpRequestTests {
 		mockRequest.setCharacterEncoding("iso-8859-1");
 		ServerHttpRequest request = new RequestPartServletServerHttpRequest(mockRequest, "part");
 		byte[] result = FileCopyUtils.copyToByteArray(request.getBody());
-		assertThat(result).isEqualTo(bytes);
+		assertArrayEquals(bytes, result);
 	}
 
 	@Test  // gh-25829
@@ -148,7 +148,7 @@ public class RequestPartServletServerHttpRequestTests {
 		ServerHttpRequest request = new RequestPartServletServerHttpRequest(this.mockRequest, "part");
 
 		byte[] result = FileCopyUtils.copyToByteArray(request.getBody());
-		assertThat(result).isEqualTo(bytes);
+		assertArrayEquals(bytes, result);
 	}
 
 }

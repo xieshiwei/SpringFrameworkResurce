@@ -134,7 +134,7 @@ public abstract class PropertySource<T> {
 	 * <p>No properties other than {@code name} are evaluated.
 	 */
 	@Override
-	public boolean equals(@Nullable Object other) {
+	public boolean equals(Object other) {
 		return (this == other || (other instanceof PropertySource &&
 				ObjectUtils.nullSafeEquals(getName(), ((PropertySource<?>) other).getName())));
 	}

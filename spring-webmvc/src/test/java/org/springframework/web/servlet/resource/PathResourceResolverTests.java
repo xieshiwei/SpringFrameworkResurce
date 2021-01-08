@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +21,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.mock.web.test.MockHttpServletRequest;
+import org.springframework.mock.web.test.MockServletContext;
 import org.springframework.web.context.support.ServletContextResource;
-import org.springframework.web.testfixture.servlet.MockHttpServletRequest;
-import org.springframework.web.testfixture.servlet.MockServletContext;
 import org.springframework.web.util.UrlPathHelper;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.junit.Assert.*;
 
 /**
  * Unit tests for {@link PathResourceResolver}.
@@ -51,7 +50,7 @@ public class PathResourceResolverTests {
 		String requestPath = "bar.css";
 		Resource actual = this.resolver.resolveResource(null, requestPath, Collections.singletonList(location), null);
 
-		assertThat(actual).isEqualTo(location.createRelative(requestPath));
+		assertEquals(location.createRelative(requestPath), actual);
 	}
 
 	@Test
@@ -60,7 +59,7 @@ public class PathResourceResolverTests {
 		String requestPath = "org/springframework/web/servlet/resource/test/bar.css";
 		Resource actual = this.resolver.resolveResource(null, requestPath, Collections.singletonList(location), null);
 
-		assertThat(actual).isNotNull();
+		assertNotNull(actual);
 	}
 
 	@Test
@@ -88,14 +87,14 @@ public class PathResourceResolverTests {
 		if (!location.createRelative(requestPath).exists() && !requestPath.contains(":")) {
 			fail(requestPath + " doesn't actually exist as a relative path");
 		}
-		assertThat(actual).isNull();
+		assertNull(actual);
 	}
 
 	@Test // gh-23463
 	public void ignoreInvalidEscapeSequence() throws IOException {
 		UrlResource location = new UrlResource(getClass().getResource("./test/"));
 		Resource resource = location.createRelative("test%file.txt");
-		assertThat(this.resolver.checkResource(resource, location)).isTrue();
+		assertTrue(this.resolver.checkResource(resource, location));
 	}
 
 	@Test
@@ -108,7 +107,7 @@ public class PathResourceResolverTests {
 		Resource location = getResource("main.css");
 		List<Resource> locations = Collections.singletonList(location);
 		String actual = this.resolver.resolveUrlPath("../testalternatepath/bar.css", locations, null);
-		assertThat(actual).isEqualTo("../testalternatepath/bar.css");
+		assertEquals("../testalternatepath/bar.css", actual);
 	}
 
 	@Test // SPR-12432
@@ -119,25 +118,22 @@ public class PathResourceResolverTests {
 		ServletContextResource servletContextLocation = new ServletContextResource(context, "/webjars/");
 		ServletContextResource resource = new ServletContextResource(context, "/webjars/webjar-foo/1.0/foo.js");
 
-		assertThat(this.resolver.checkResource(resource, classpathLocation)).isFalse();
-		assertThat(this.resolver.checkResource(resource, servletContextLocation)).isTrue();
+		assertFalse(this.resolver.checkResource(resource, classpathLocation));
+		assertTrue(this.resolver.checkResource(resource, servletContextLocation));
 	}
 
 	@Test // SPR-12624
 	public void checkRelativeLocation() throws Exception {
-		String location= new UrlResource(getClass().getResource("./test/")).getURL().toExternalForm();
-		location = location.replace("/test/org/springframework","/test/org/../org/springframework");
+		String locationUrl= new UrlResource(getClass().getResource("./test/")).getURL().toExternalForm();
+		Resource location = new UrlResource(locationUrl.replace("/springframework","/../org/springframework"));
 
-		Resource actual = this.resolver.resolveResource(
-				null, "main.css", Collections.singletonList(new UrlResource(location)), null);
-
-		assertThat(actual).isNotNull();
+		assertNotNull(this.resolver.resolveResource(null, "main.css", Collections.singletonList(location), null));
 	}
 
 	@Test // SPR-12747
 	public void checkFileLocation() throws Exception {
 		Resource resource = getResource("main.css");
-		assertThat(this.resolver.checkResource(resource, resource)).isTrue();
+		assertTrue(this.resolver.checkResource(resource, resource));
 	}
 
 	@Test // SPR-13241
@@ -145,7 +141,7 @@ public class PathResourceResolverTests {
 		Resource webjarsLocation = new ClassPathResource("/META-INF/resources/webjars/", PathResourceResolver.class);
 		String path = this.resolver.resolveUrlPathInternal("", Collections.singletonList(webjarsLocation), null);
 
-		assertThat(path).isNull();
+		assertNull(path);
 	}
 
 	@Test
@@ -158,19 +154,19 @@ public class PathResourceResolverTests {
 		this.resolver.setLocationCharsets(Collections.singletonMap(location, StandardCharsets.ISO_8859_1));
 		this.resolver.resolveResource(new MockHttpServletRequest(), "/Ä ;ä.txt", locations, null);
 
-		assertThat(location.getSavedRelativePath()).isEqualTo("%C4%20%3B%E4.txt");
+		assertEquals("%C4%20%3B%E4.txt", location.getSavedRelativePath());
 
 		// UTF-8
 		this.resolver.setLocationCharsets(Collections.singletonMap(location, StandardCharsets.UTF_8));
 		this.resolver.resolveResource(new MockHttpServletRequest(), "/Ä ;ä.txt", locations, null);
 
-		assertThat(location.getSavedRelativePath()).isEqualTo("%C3%84%20%3B%C3%A4.txt");
+		assertEquals("%C3%84%20%3B%C3%A4.txt", location.getSavedRelativePath());
 
 		// UTF-8 by default
 		this.resolver.setLocationCharsets(Collections.emptyMap());
 		this.resolver.resolveResource(new MockHttpServletRequest(), "/Ä ;ä.txt", locations, null);
 
-		assertThat(location.getSavedRelativePath()).isEqualTo("%C3%84%20%3B%C3%A4.txt");
+		assertEquals("%C3%84%20%3B%C3%A4.txt", location.getSavedRelativePath());
 	}
 
 	private Resource getResource(String filePath) {

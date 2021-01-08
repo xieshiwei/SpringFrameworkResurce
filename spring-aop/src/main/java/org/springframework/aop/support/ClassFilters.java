@@ -20,7 +20,6 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 import org.springframework.aop.ClassFilter;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
@@ -109,7 +108,7 @@ public abstract class ClassFilters {
 		}
 
 		@Override
-		public boolean equals(@Nullable Object other) {
+		public boolean equals(Object other) {
 			return (this == other || (other instanceof UnionClassFilter &&
 					ObjectUtils.nullSafeEquals(this.filters, ((UnionClassFilter) other).filters)));
 		}
@@ -150,7 +149,7 @@ public abstract class ClassFilters {
 		}
 
 		@Override
-		public boolean equals(@Nullable Object other) {
+		public boolean equals(Object other) {
 			return (this == other || (other instanceof IntersectionClassFilter &&
 					ObjectUtils.nullSafeEquals(this.filters, ((IntersectionClassFilter) other).filters)));
 		}

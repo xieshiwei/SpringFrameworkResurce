@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,17 +65,15 @@ import org.springframework.web.server.ServerWebExchange;
  * @author Brian Clozel
  * @since 5.0
  * @see <a href="https://html.spec.whatwg.org/multipage/browsers.html#offline">HTML5 offline applications spec</a>
- * @deprecated as of 5.3 since browser support is going away
  */
-@Deprecated
 public class AppCacheManifestTransformer extends ResourceTransformerSupport {
+
+	private static final Collection<String> MANIFEST_SECTION_HEADERS =
+			Arrays.asList("CACHE MANIFEST", "NETWORK:", "FALLBACK:", "CACHE:");
 
 	private static final String MANIFEST_HEADER = "CACHE MANIFEST";
 
 	private static final String CACHE_HEADER = "CACHE:";
-
-	private static final Collection<String> MANIFEST_SECTION_HEADERS =
-			Arrays.asList(MANIFEST_HEADER, "NETWORK:", "FALLBACK:", CACHE_HEADER);
 
 	private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
@@ -214,9 +212,8 @@ public class AppCacheManifestTransformer extends ResourceTransformerSupport {
 
 
 		private static boolean initCacheSectionFlag(String line, @Nullable LineInfo previousLine) {
-			String trimmedLine = line.trim();
-			if (MANIFEST_SECTION_HEADERS.contains(trimmedLine)) {
-				return trimmedLine.equals(CACHE_HEADER);
+			if (MANIFEST_SECTION_HEADERS.contains(line.trim())) {
+				return line.trim().equals(CACHE_HEADER);
 			}
 			else if (previousLine != null) {
 				return previousLine.isCacheSection();

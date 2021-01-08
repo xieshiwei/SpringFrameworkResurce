@@ -18,7 +18,6 @@ package org.springframework.cache.config;
 
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.GenericXmlApplicationContext;
-import org.springframework.context.testfixture.cache.AbstractCacheAnnotationTests;
 
 /**
  * @author Costin Leau

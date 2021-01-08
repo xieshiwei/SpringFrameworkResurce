@@ -23,7 +23,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -59,7 +58,6 @@ import org.springframework.web.util.WebUtils;
  * @author Rod Johnson
  * @author Brian Clozel
  * @author Vedran Pavic
- * @author Sebastien Deleuze
  * @author Sam Brannen
  * @since 1.0.2
  */
@@ -169,15 +167,14 @@ public class MockHttpServletResponse implements HttpServletResponse {
 	public void setCharacterEncoding(String characterEncoding) {
 		this.characterEncoding = characterEncoding;
 		this.charset = true;
-		updateContentTypePropertyAndHeader();
+		updateContentTypeHeader();
 	}
 
-	private void updateContentTypePropertyAndHeader() {
+	private void updateContentTypeHeader() {
 		if (this.contentType != null) {
 			String value = this.contentType;
 			if (this.charset && !this.contentType.toLowerCase().contains(CHARSET_PREFIX)) {
 				value = value + ';' + CHARSET_PREFIX + this.characterEncoding;
-				this.contentType = value;
 			}
 			doAddHeaderValue(HttpHeaders.CONTENT_TYPE, value, true);
 		}
@@ -211,35 +208,9 @@ public class MockHttpServletResponse implements HttpServletResponse {
 		return this.content.toByteArray();
 	}
 
-	/**
-	 * Get the content of the response body as a {@code String}, using the charset
-	 * specified for the response by the application, either through
-	 * {@link HttpServletResponse} methods or through a charset parameter on the
-	 * {@code Content-Type}.
-	 * @return the content as a {@code String}
-	 * @throws UnsupportedEncodingException if the character encoding is not supported
-	 * @see #getContentAsString(Charset)
-	 */
 	public String getContentAsString() throws UnsupportedEncodingException {
 		return (this.characterEncoding != null ?
 				this.content.toString(this.characterEncoding) : this.content.toString());
-	}
-
-	/**
-	 * Get the content of the response body as a {@code String}, using the provided
-	 * {@code fallbackCharset} if no charset has been explicitly defined and otherwise
-	 * using the charset specified for the response by the application, either
-	 * through {@link HttpServletResponse} methods or through a charset parameter on the
-	 * {@code Content-Type}.
-	 * @return the content as a {@code String}
-	 * @throws UnsupportedEncodingException if the character encoding is not supported
-	 * @since 5.2
-	 * @see #getContentAsString()
-	 */
-	public String getContentAsString(Charset fallbackCharset) throws UnsupportedEncodingException {
-		return (isCharset() && this.characterEncoding != null ?
-				this.content.toString(this.characterEncoding) :
-				this.content.toString(fallbackCharset.name()));
 	}
 
 	@Override
@@ -281,7 +252,7 @@ public class MockHttpServletResponse implements HttpServletResponse {
 					this.charset = true;
 				}
 			}
-			updateContentTypePropertyAndHeader();
+			updateContentTypeHeader();
 		}
 	}
 
@@ -640,15 +611,10 @@ public class MockHttpServletResponse implements HttpServletResponse {
 			return true;
 		}
 		else if (HttpHeaders.CONTENT_LANGUAGE.equalsIgnoreCase(name)) {
-			String contentLanguages = value.toString();
 			HttpHeaders headers = new HttpHeaders();
-			headers.add(HttpHeaders.CONTENT_LANGUAGE, contentLanguages);
+			headers.add(HttpHeaders.CONTENT_LANGUAGE, value.toString());
 			Locale language = headers.getContentLanguage();
 			setLocale(language != null ? language : Locale.getDefault());
-			// Since setLocale() sets the Content-Language header to the given
-			// single Locale, we have to explicitly set the Content-Language header
-			// to the user-provided value.
-			doAddHeaderValue(HttpHeaders.CONTENT_LANGUAGE, contentLanguages, true);
 			return true;
 		}
 		else if (HttpHeaders.SET_COOKIE.equalsIgnoreCase(name)) {
@@ -667,8 +633,12 @@ public class MockHttpServletResponse implements HttpServletResponse {
 	}
 
 	private void doAddHeaderValue(String name, Object value, boolean replace) {
+		HeaderValueHolder header = this.headers.get(name);
 		Assert.notNull(value, "Header value must not be null");
-		HeaderValueHolder header = this.headers.computeIfAbsent(name, key -> new HeaderValueHolder());
+		if (header == null) {
+			header = new HeaderValueHolder();
+			this.headers.put(name, header);
+		}
 		if (replace) {
 			header.setValue(value);
 		}

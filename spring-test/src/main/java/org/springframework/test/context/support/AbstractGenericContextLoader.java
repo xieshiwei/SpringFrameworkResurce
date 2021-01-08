@@ -68,8 +68,7 @@ public abstract class AbstractGenericContextLoader extends AbstractContextLoader
 	 * <ul>
 	 * <li>Calls {@link #validateMergedContextConfiguration(MergedContextConfiguration)}
 	 * to allow subclasses to validate the supplied configuration before proceeding.</li>
-	 * <li>Calls {@link #createContext()} to create a {@link GenericApplicationContext}
-	 * instance.</li>
+	 * <li>Creates a {@link GenericApplicationContext} instance.</li>
 	 * <li>If the supplied {@code MergedContextConfiguration} references a
 	 * {@linkplain MergedContextConfiguration#getParent() parent configuration},
 	 * the corresponding {@link MergedContextConfiguration#getParentApplicationContext()
@@ -110,7 +109,8 @@ public abstract class AbstractGenericContextLoader extends AbstractContextLoader
 
 		validateMergedContextConfiguration(mergedConfig);
 
-		GenericApplicationContext context = createContext();
+		GenericApplicationContext context = new GenericApplicationContext();
+
 		ApplicationContext parent = mergedConfig.getParentApplicationContext();
 		if (parent != null) {
 			context.setParent(parent);
@@ -148,8 +148,7 @@ public abstract class AbstractGenericContextLoader extends AbstractContextLoader
 	 * Load a Spring ApplicationContext from the supplied {@code locations}.
 	 * <p>Implementation details:
 	 * <ul>
-	 * <li>Calls {@link #createContext()} to create a {@link GenericApplicationContext}
-	 * instance.</li>
+	 * <li>Creates a {@link GenericApplicationContext} instance.</li>
 	 * <li>Calls {@link #prepareContext(GenericApplicationContext)} to allow for customizing the context
 	 * before bean definitions are loaded.</li>
 	 * <li>Calls {@link #customizeBeanFactory(DefaultListableBeanFactory)} to allow for customizing the
@@ -182,7 +181,7 @@ public abstract class AbstractGenericContextLoader extends AbstractContextLoader
 					StringUtils.arrayToCommaDelimitedString(locations)));
 		}
 
-		GenericApplicationContext context = createContext();
+		GenericApplicationContext context = new GenericApplicationContext();
 
 		prepareContext(context);
 		customizeBeanFactory(context.getDefaultListableBeanFactory());
@@ -194,20 +193,6 @@ public abstract class AbstractGenericContextLoader extends AbstractContextLoader
 		context.registerShutdownHook();
 
 		return context;
-	}
-
-	/**
-	 * Factory method for creating the {@link GenericApplicationContext} used by
-	 * this {@code ContextLoader}.
-	 * <p>The default implementation creates a {@code GenericApplicationContext}
-	 * using the default constructor. This method may get overridden e.g. to use
-	 * a custom context subclass or to create a {@code GenericApplicationContext}
-	 * with a custom {@link DefaultListableBeanFactory} implementation.
-	 * @return a newly instantiated {@code GenericApplicationContext}
-	 * @since 5.2.9
-	 */
-	protected GenericApplicationContext createContext() {
-		return new GenericApplicationContext();
 	}
 
 	/**

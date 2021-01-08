@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package org.springframework.web.servlet.mvc.method.annotation;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -35,7 +33,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.lang.Nullable;
@@ -61,7 +58,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
  */
 public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodReturnValueHandler {
 
-	private final List<HttpMessageConverter<?>> sseMessageConverters;
+	private final List<HttpMessageConverter<?>> messageConverters;
 
 	private final ReactiveTypeHandler reactiveHandler;
 
@@ -74,7 +71,7 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 	 */
 	public ResponseBodyEmitterReturnValueHandler(List<HttpMessageConverter<?>> messageConverters) {
 		Assert.notEmpty(messageConverters, "HttpMessageConverter List must not be empty");
-		this.sseMessageConverters = initSseConverters(messageConverters);
+		this.messageConverters = messageConverters;
 		this.reactiveHandler = new ReactiveTypeHandler();
 	}
 
@@ -90,20 +87,8 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 			ReactiveAdapterRegistry registry, TaskExecutor executor, ContentNegotiationManager manager) {
 
 		Assert.notEmpty(messageConverters, "HttpMessageConverter List must not be empty");
-		this.sseMessageConverters = initSseConverters(messageConverters);
+		this.messageConverters = messageConverters;
 		this.reactiveHandler = new ReactiveTypeHandler(registry, executor, manager);
-	}
-
-	private static List<HttpMessageConverter<?>> initSseConverters(List<HttpMessageConverter<?>> converters) {
-		for (HttpMessageConverter<?> converter : converters) {
-			if (converter.canWrite(String.class, MediaType.TEXT_PLAIN)) {
-				return converters;
-			}
-		}
-		List<HttpMessageConverter<?>> result = new ArrayList<>(converters.size() + 1);
-		result.add(new StringHttpMessageConverter(StandardCharsets.UTF_8));
-		result.addAll(converters);
-		return result;
 	}
 
 
@@ -168,21 +153,15 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 		// At this point we know we're streaming..
 		ShallowEtagHeaderFilter.disableContentCaching(request);
 
-		// Wrap the response to ignore further header changes
-		// Headers will be flushed at the first write
+		// Commit the response and wrap to ignore further header changes
+		outputMessage.getBody();
+		outputMessage.flush();
 		outputMessage = new StreamingServletServerHttpResponse(outputMessage);
 
-		HttpMessageConvertingHandler handler;
-		try {
-			DeferredResult<?> deferredResult = new DeferredResult<>(emitter.getTimeout());
-			WebAsyncUtils.getAsyncManager(webRequest).startDeferredResultProcessing(deferredResult, mavContainer);
-			handler = new HttpMessageConvertingHandler(outputMessage, deferredResult);
-		}
-		catch (Throwable ex) {
-			emitter.initializeWithError(ex);
-			throw ex;
-		}
+		DeferredResult<?> deferredResult = new DeferredResult<>(emitter.getTimeout());
+		WebAsyncUtils.getAsyncManager(webRequest).startDeferredResultProcessing(deferredResult, mavContainer);
 
+		HttpMessageConvertingHandler handler = new HttpMessageConvertingHandler(outputMessage, deferredResult);
 		emitter.initialize(handler);
 	}
 
@@ -208,7 +187,7 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 
 		@SuppressWarnings("unchecked")
 		private <T> void sendInternal(T data, @Nullable MediaType mediaType) throws IOException {
-			for (HttpMessageConverter<?> converter : ResponseBodyEmitterReturnValueHandler.this.sseMessageConverters) {
+			for (HttpMessageConverter<?> converter : ResponseBodyEmitterReturnValueHandler.this.messageConverters) {
 				if (converter.canWrite(data.getClass(), mediaType)) {
 					((HttpMessageConverter<T>) converter).write(data, mediaType, this.outputMessage);
 					this.outputMessage.flush();
@@ -220,13 +199,7 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 
 		@Override
 		public void complete() {
-			try {
-				this.outputMessage.flush();
-				this.deferredResult.setResult(null);
-			}
-			catch (IOException ex) {
-				this.deferredResult.setErrorResult(ex);
-			}
+			this.deferredResult.setResult(null);
 		}
 
 		@Override

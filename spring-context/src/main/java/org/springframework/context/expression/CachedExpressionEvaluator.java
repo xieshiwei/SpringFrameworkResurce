@@ -22,7 +22,6 @@ import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
@@ -114,7 +113,7 @@ public abstract class CachedExpressionEvaluator {
 		}
 
 		@Override
-		public boolean equals(@Nullable Object other) {
+		public boolean equals(Object other) {
 			if (this == other) {
 				return true;
 			}

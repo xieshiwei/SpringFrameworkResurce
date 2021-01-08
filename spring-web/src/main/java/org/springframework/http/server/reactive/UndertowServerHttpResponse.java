@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,21 +82,16 @@ class UndertowServerHttpResponse extends AbstractListenerServerHttpResponse impl
 
 	@Override
 	public HttpStatus getStatusCode() {
-		HttpStatus status = super.getStatusCode();
-		return (status != null ? status : HttpStatus.resolve(this.exchange.getStatusCode()));
+		HttpStatus httpStatus = super.getStatusCode();
+		return (httpStatus != null ? httpStatus : HttpStatus.resolve(this.exchange.getStatusCode()));
 	}
 
-	@Override
-	public Integer getRawStatusCode() {
-		Integer status = super.getRawStatusCode();
-		return (status != null ? status : this.exchange.getStatusCode());
-	}
 
 	@Override
 	protected void applyStatusCode() {
-		Integer status = super.getRawStatusCode();
-		if (status != null) {
-			this.exchange.setStatusCode(status);
+		Integer statusCode = getStatusCodeValue();
+		if (statusCode != null) {
+			this.exchange.setStatusCode(statusCode);
 		}
 	}
 
@@ -104,7 +99,6 @@ class UndertowServerHttpResponse extends AbstractListenerServerHttpResponse impl
 	protected void applyHeaders() {
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	protected void applyCookies() {
 		for (String name : getCookies().keySet()) {
@@ -122,7 +116,6 @@ class UndertowServerHttpResponse extends AbstractListenerServerHttpResponse impl
 				cookie.setSecure(httpCookie.isSecure());
 				cookie.setHttpOnly(httpCookie.isHttpOnly());
 				cookie.setSameSiteMode(httpCookie.getSameSite());
-				// getResponseCookies() is deprecated in Undertow 2.2
 				this.exchange.getResponseCookies().putIfAbsent(name, cookie);
 			}
 		}
@@ -205,7 +198,10 @@ class UndertowServerHttpResponse extends AbstractListenerServerHttpResponse impl
 			int total = buffer.remaining();
 			int written = writeByteBuffer(buffer);
 
-			if (rsWriteLogger.isTraceEnabled()) {
+			if (logger.isTraceEnabled()) {
+				logger.trace(getLogPrefix() + "Wrote " + written + " of " + total + " bytes");
+			}
+			else if (rsWriteLogger.isTraceEnabled()) {
 				rsWriteLogger.trace(getLogPrefix() + "Wrote " + written + " of " + total + " bytes");
 			}
 			if (written != total) {

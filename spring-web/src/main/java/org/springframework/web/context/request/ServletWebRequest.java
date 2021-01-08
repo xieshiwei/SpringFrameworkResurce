@@ -33,7 +33,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.Nullable;
@@ -51,6 +50,16 @@ import org.springframework.web.util.WebUtils;
  * @since 2.0
  */
 public class ServletWebRequest extends ServletRequestAttributes implements NativeWebRequest {
+
+	private static final String ETAG = "ETag";
+
+	private static final String IF_MODIFIED_SINCE = "If-Modified-Since";
+
+	private static final String IF_UNMODIFIED_SINCE = "If-Unmodified-Since";
+
+	private static final String IF_NONE_MATCH = "If-None-Match";
+
+	private static final String LAST_MODIFIED = "Last-Modified";
 
 	private static final List<String> SAFE_METHODS = Arrays.asList("GET", "HEAD");
 
@@ -236,11 +245,11 @@ public class ServletWebRequest extends ServletRequestAttributes implements Nativ
 						HttpStatus.NOT_MODIFIED.value() : HttpStatus.PRECONDITION_FAILED.value());
 			}
 			if (isHttpGetOrHead) {
-				if (lastModifiedTimestamp > 0 && parseDateValue(response.getHeader(HttpHeaders.LAST_MODIFIED)) == -1) {
-					response.setDateHeader(HttpHeaders.LAST_MODIFIED, lastModifiedTimestamp);
+				if (lastModifiedTimestamp > 0 && parseDateValue(response.getHeader(LAST_MODIFIED)) == -1) {
+					response.setDateHeader(LAST_MODIFIED, lastModifiedTimestamp);
 				}
-				if (StringUtils.hasLength(etag) && response.getHeader(HttpHeaders.ETAG) == null) {
-					response.setHeader(HttpHeaders.ETAG, padEtagIfNecessary(etag));
+				if (StringUtils.hasLength(etag) && response.getHeader(ETAG) == null) {
+					response.setHeader(ETAG, padEtagIfNecessary(etag));
 				}
 			}
 		}
@@ -252,7 +261,7 @@ public class ServletWebRequest extends ServletRequestAttributes implements Nativ
 		if (lastModifiedTimestamp < 0) {
 			return false;
 		}
-		long ifUnmodifiedSince = parseDateHeader(HttpHeaders.IF_UNMODIFIED_SINCE);
+		long ifUnmodifiedSince = parseDateHeader(IF_UNMODIFIED_SINCE);
 		if (ifUnmodifiedSince == -1) {
 			return false;
 		}
@@ -268,7 +277,7 @@ public class ServletWebRequest extends ServletRequestAttributes implements Nativ
 
 		Enumeration<String> ifNoneMatch;
 		try {
-			ifNoneMatch = getRequest().getHeaders(HttpHeaders.IF_NONE_MATCH);
+			ifNoneMatch = getRequest().getHeaders(IF_NONE_MATCH);
 		}
 		catch (IllegalArgumentException ex) {
 			return false;
@@ -311,7 +320,7 @@ public class ServletWebRequest extends ServletRequestAttributes implements Nativ
 		if (lastModifiedTimestamp < 0) {
 			return false;
 		}
-		long ifModifiedSince = parseDateHeader(HttpHeaders.IF_MODIFIED_SINCE);
+		long ifModifiedSince = parseDateHeader(IF_MODIFIED_SINCE);
 		if (ifModifiedSince == -1) {
 			return false;
 		}

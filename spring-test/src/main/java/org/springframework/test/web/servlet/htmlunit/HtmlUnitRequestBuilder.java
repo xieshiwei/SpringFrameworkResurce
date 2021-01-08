@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,12 @@
 
 package org.springframework.test.web.servlet.htmlunit;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
@@ -42,7 +38,6 @@ import com.gargoylesoftware.htmlunit.CookieManager;
 import com.gargoylesoftware.htmlunit.FormEncodingType;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebRequest;
-import com.gargoylesoftware.htmlunit.util.KeyDataPair;
 import com.gargoylesoftware.htmlunit.util.NameValuePair;
 
 import org.springframework.beans.Mergeable;
@@ -50,7 +45,6 @@ import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpSession;
-import org.springframework.mock.web.MockPart;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.SmartRequestBuilder;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -113,16 +107,14 @@ final class HtmlUnitRequestBuilder implements RequestBuilder, Mergeable {
 	}
 
 
-	@Override
 	public MockHttpServletRequest buildRequest(ServletContext servletContext) {
 		Charset charset = getCharset();
 		String httpMethod = this.webRequest.getHttpMethod().name();
 		UriComponents uriComponents = uriComponents();
 		String path = uriComponents.getPath();
 
-		MockHttpServletRequest request =
-				new HtmlUnitMockHttpServletRequest(servletContext, httpMethod, (path != null ? path : ""));
-
+		MockHttpServletRequest request = new HtmlUnitMockHttpServletRequest(
+				servletContext, httpMethod, (path != null ? path : ""));
 		parent(request, this.parentBuilder);
 		String host = uriComponents.getHost();
 		request.setServerName(host != null ? host : "");  // needs to be first for additional headers
@@ -298,7 +290,9 @@ final class HtmlUnitRequestBuilder implements RequestBuilder, Mergeable {
 
 		Cookie[] parentCookies = request.getCookies();
 		if (parentCookies != null) {
-			Collections.addAll(cookies, parentCookies);
+			for (Cookie cookie : parentCookies) {
+				cookies.add(cookie);
+			}
 		}
 
 		if (!ObjectUtils.isEmpty(cookies)) {
@@ -371,15 +365,7 @@ final class HtmlUnitRequestBuilder implements RequestBuilder, Mergeable {
 			});
 		});
 		for (NameValuePair param : this.webRequest.getRequestParameters()) {
-			if (param instanceof KeyDataPair) {
-				KeyDataPair pair = (KeyDataPair) param;
-				MockPart part = new MockPart(pair.getName(), pair.getFile().getName(), readAllBytes(pair.getFile()));
-				part.getHeaders().setContentType(MediaType.valueOf(pair.getMimeType()));
-				request.addPart(part);
-			}
-			else {
-				request.addParameter(param.getName(), param.getValue());
-			}
+			request.addParameter(param.getName(), param.getValue());
 		}
 	}
 
@@ -388,15 +374,6 @@ final class HtmlUnitRequestBuilder implements RequestBuilder, Mergeable {
 			return URLDecoder.decode(value, "UTF-8");
 		}
 		catch (UnsupportedEncodingException ex) {
-			throw new IllegalStateException(ex);
-		}
-	}
-
-	private byte[] readAllBytes(File file) {
-		try {
-			return Files.readAllBytes(file.toPath());
-		}
-		catch (IOException ex) {
 			throw new IllegalStateException(ex);
 		}
 	}

@@ -26,9 +26,7 @@ import java.util.stream.Stream;
 
 import reactor.core.publisher.Mono;
 
-import org.springframework.core.CoroutinesUtils;
 import org.springframework.core.DefaultParameterNameDiscoverer;
-import org.springframework.core.KotlinDetector;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.core.ReactiveAdapter;
@@ -50,7 +48,6 @@ import org.springframework.web.server.ServerWebExchange;
  *
  * @author Rossen Stoyanchev
  * @author Juergen Hoeller
- * @author Sebastien Deleuze
  * @since 5.0
  */
 public class InvocableHandlerMethod extends HandlerMethod {
@@ -86,7 +83,7 @@ public class InvocableHandlerMethod extends HandlerMethod {
 	 * Configure the argument resolvers to use to use for resolving method
 	 * argument values against a {@code ServerWebExchange}.
 	 */
-	public void setArgumentResolvers(List<? extends HandlerMethodArgumentResolver> resolvers) {
+	public void setArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
 		this.resolvers.addResolvers(resolvers);
 	}
 
@@ -130,7 +127,6 @@ public class InvocableHandlerMethod extends HandlerMethod {
 	 * @param providedArgs optional list of argument values to match by type
 	 * @return a Mono with a {@link HandlerResult}
 	 */
-	@SuppressWarnings("KotlinInternalInJava")
 	public Mono<HandlerResult> invoke(
 			ServerWebExchange exchange, BindingContext bindingContext, Object... providedArgs) {
 
@@ -138,13 +134,7 @@ public class InvocableHandlerMethod extends HandlerMethod {
 			Object value;
 			try {
 				ReflectionUtils.makeAccessible(getBridgedMethod());
-				Method method = getBridgedMethod();
-				if (KotlinDetector.isSuspendingFunction(method)) {
-					value = CoroutinesUtils.invokeSuspendingFunction(method, getBean(), args);
-				}
-				else {
-					value = method.invoke(getBean(), args);
-				}
+				value = getBridgedMethod().invoke(getBean(), args);
 			}
 			catch (IllegalArgumentException ex) {
 				assertTargetBean(getBridgedMethod(), getBean(), args);

@@ -19,7 +19,6 @@ package org.springframework.util.comparator;
 import java.io.Serializable;
 import java.util.Comparator;
 
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -109,7 +108,7 @@ public class InvertibleComparator<T> implements Comparator<T>, Serializable {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public boolean equals(@Nullable Object other) {
+	public boolean equals(Object other) {
 		if (this == other) {
 			return true;
 		}

@@ -1312,7 +1312,6 @@ public class MockHttpServletRequest implements HttpServletRequest {
 	 * Otherwise it simply returns the current session id.
 	 * @since 4.0.3
 	 */
-	@Override
 	public String changeSessionId() {
 		Assert.isTrue(this.session != null, "The request does not have a session");
 		if (this.session instanceof MockHttpSession) {

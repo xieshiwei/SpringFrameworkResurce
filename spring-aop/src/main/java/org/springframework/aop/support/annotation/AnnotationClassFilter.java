@@ -20,7 +20,6 @@ import java.lang.annotation.Annotation;
 
 import org.springframework.aop.ClassFilter;
 import org.springframework.core.annotation.AnnotatedElementUtils;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -68,7 +67,7 @@ public class AnnotationClassFilter implements ClassFilter {
 	}
 
 	@Override
-	public boolean equals(@Nullable Object other) {
+	public boolean equals(Object other) {
 		if (this == other) {
 			return true;
 		}

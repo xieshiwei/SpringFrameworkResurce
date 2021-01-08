@@ -16,8 +16,8 @@
 
 package org.springframework.web.reactive.result.method;
 
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,7 +39,7 @@ import org.springframework.web.server.ServerWebExchange;
  */
 class HandlerMethodArgumentResolverComposite implements HandlerMethodArgumentResolver {
 
-	private final List<HandlerMethodArgumentResolver> argumentResolvers = new ArrayList<>();
+	private final List<HandlerMethodArgumentResolver> argumentResolvers = new LinkedList<>();
 
 	private final Map<MethodParameter, HandlerMethodArgumentResolver> argumentResolverCache =
 			new ConcurrentHashMap<>(256);

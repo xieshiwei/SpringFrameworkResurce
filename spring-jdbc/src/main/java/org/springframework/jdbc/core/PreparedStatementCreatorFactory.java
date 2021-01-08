@@ -21,10 +21,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -33,7 +34,7 @@ import org.springframework.lang.Nullable;
 
 /**
  * Helper class that efficiently creates multiple {@link PreparedStatementCreator}
- * objects with different parameters based on an SQL statement and a single
+ * objects with different parameters based on a SQL statement and a single
  * set of parameter declarations.
  *
  * @author Rod Johnson
@@ -65,7 +66,7 @@ public class PreparedStatementCreatorFactory {
 	 */
 	public PreparedStatementCreatorFactory(String sql) {
 		this.sql = sql;
-		this.declaredParameters = new ArrayList<>();
+		this.declaredParameters = new LinkedList<>();
 	}
 
 	/**
@@ -265,8 +266,8 @@ public class PreparedStatementCreatorFactory {
 					}
 					declaredParameter = declaredParameters.get(i);
 				}
-				if (in instanceof Iterable && declaredParameter.getSqlType() != Types.ARRAY) {
-					Iterable<?> entries = (Iterable<?>) in;
+				if (in instanceof Collection && declaredParameter.getSqlType() != Types.ARRAY) {
+					Collection<?> entries = (Collection<?>) in;
 					for (Object entry : entries) {
 						if (entry instanceof Object[]) {
 							Object[] valueArray = (Object[]) entry;

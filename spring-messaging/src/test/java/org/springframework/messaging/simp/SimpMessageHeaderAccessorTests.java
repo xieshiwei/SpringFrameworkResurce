@@ -20,11 +20,9 @@ import java.security.Principal;
 import java.util.Collections;
 import java.util.function.Consumer;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-import org.springframework.core.testfixture.security.TestPrincipal;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -37,8 +35,7 @@ public class SimpMessageHeaderAccessorTests {
 
 	@Test
 	public void getShortLogMessage() {
-		assertThat(SimpMessageHeaderAccessor.create().getShortLogMessage("p"))
-				.isEqualTo("MESSAGE session=null payload=p");
+		assertEquals("MESSAGE session=null payload=p", SimpMessageHeaderAccessor.create().getShortLogMessage("p"));
 	}
 
 	@Test
@@ -50,9 +47,8 @@ public class SimpMessageHeaderAccessorTests {
 		accessor.setUser(new TestPrincipal("user"));
 		accessor.setSessionAttributes(Collections.<String, Object>singletonMap("key", "value"));
 
-		assertThat(accessor.getShortLogMessage("p"))
-				.isEqualTo(("MESSAGE destination=/destination subscriptionId=subscription " +
-						"session=session user=user attributes[1] payload=p"));
+		assertEquals("MESSAGE destination=/destination subscriptionId=subscription " +
+				"session=session user=user attributes[1] payload=p", accessor.getShortLogMessage("p"));
 	}
 
 	@Test
@@ -65,10 +61,9 @@ public class SimpMessageHeaderAccessorTests {
 		accessor.setSessionAttributes(Collections.<String, Object>singletonMap("key", "value"));
 		accessor.setNativeHeader("nativeKey", "nativeValue");
 
-		assertThat(accessor.getDetailedLogMessage("p"))
-				.isEqualTo(("MESSAGE destination=/destination subscriptionId=subscription " +
-						"session=session user=user attributes={key=value} nativeHeaders=" +
-						"{nativeKey=[nativeValue]} payload=p"));
+		assertEquals("MESSAGE destination=/destination subscriptionId=subscription " +
+				"session=session user=user attributes={key=value} nativeHeaders=" +
+				"{nativeKey=[nativeValue]} payload=p", accessor.getDetailedLogMessage("p"));
 	}
 
 	@Test
@@ -79,11 +74,11 @@ public class SimpMessageHeaderAccessorTests {
 
 		Principal user1 = mock(Principal.class);
 		accessor.setUser(user1);
-		assertThat(userCallback.getUser()).isEqualTo(user1);
+		assertEquals(user1, userCallback.getUser());
 
 		Principal user2 = mock(Principal.class);
 		accessor.setUser(user2);
-		assertThat(userCallback.getUser()).isEqualTo(user2);
+		assertEquals(user2, userCallback.getUser());
 	}
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2019 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import org.springframework.test.context.junit.jupiter.comics.Cat;
 import org.springframework.test.context.junit.jupiter.comics.Dog;
 import org.springframework.test.context.junit.jupiter.comics.Person;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration tests which demonstrate that the Spring TestContext Framework
@@ -50,19 +50,19 @@ class SpringExtensionParameterizedTests {
 	@ParameterizedTest
 	@ValueSource(strings = { "Dilbert", "Wally" })
 	void people(String name, @Autowired List<Person> people) {
-		assertThat(people.stream().map(Person::getName).filter(name::equals)).hasSize(1);
+		assertTrue(people.stream().map(Person::getName).filter(str -> name.equals(str)).findFirst().isPresent());
 	}
 
 	@ParameterizedTest
 	@CsvSource("dogbert, Dogbert")
 	void dogs(String beanName, String dogName, ApplicationContext context) {
-		assertThat(context.getBean(beanName, Dog.class)).extracting(Dog::getName).isEqualTo(dogName);
+		assertEquals(dogName, context.getBean(beanName, Dog.class).getName());
 	}
 
 	@ParameterizedTest
 	@CsvSource({ "garfield, Garfield", "catbert, Catbert" })
 	void cats(String beanName, String catName, ApplicationContext context) {
-		assertThat(context.getBean(beanName, Cat.class)).extracting(Cat::getName).isEqualTo(catName);
+		assertEquals(catName, context.getBean(beanName, Cat.class).getName());
 	}
 
 }

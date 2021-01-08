@@ -81,12 +81,6 @@ public interface WebSocketSession {
 	Mono<Void> send(Publisher<WebSocketMessage> messages);
 
 	/**
-	 * Whether the underlying connection is open.
-	 * @since 5.3.1
-	 */
-	boolean isOpen();
-
-	/**
 	 * Close the WebSocket session with {@link CloseStatus#NORMAL}.
 	 */
 	default Mono<Void> close() {
@@ -99,13 +93,6 @@ public interface WebSocketSession {
 	 */
 	Mono<Void> close(CloseStatus status);
 
-	/**
-	 * Provides access to the {@code CloseStatus} with which the session is
-	 * closed either locally or remotely, or completes empty if the session ended
-	 * without a status.
-	 * @since 5.3
-	 */
-	Mono<CloseStatus> closeStatus();
 
 	// WebSocketMessage factory methods
 

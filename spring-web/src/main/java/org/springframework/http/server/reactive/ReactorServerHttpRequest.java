@@ -19,7 +19,6 @@ package org.springframework.http.server.reactive;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.net.ssl.SSLSession;
 
@@ -34,6 +33,7 @@ import reactor.netty.http.server.HttpServerRequest;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.NettyDataBufferFactory;
 import org.springframework.http.HttpCookie;
+import org.springframework.http.HttpHeaders;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
@@ -48,9 +48,6 @@ import org.springframework.util.MultiValueMap;
  */
 class ReactorServerHttpRequest extends AbstractServerHttpRequest {
 
-	private static final AtomicLong logPrefixIndex = new AtomicLong();
-
-
 	private final HttpServerRequest request;
 
 	private final NettyDataBufferFactory bufferFactory;
@@ -59,7 +56,7 @@ class ReactorServerHttpRequest extends AbstractServerHttpRequest {
 	public ReactorServerHttpRequest(HttpServerRequest request, NettyDataBufferFactory bufferFactory)
 			throws URISyntaxException {
 
-		super(initUri(request), "", new NettyHeadersAdapter(request.requestHeaders()));
+		super(initUri(request), "", initHeaders(request));
 		Assert.notNull(bufferFactory, "DataBufferFactory must not be null");
 		this.request = request;
 		this.bufferFactory = bufferFactory;
@@ -128,6 +125,11 @@ class ReactorServerHttpRequest extends AbstractServerHttpRequest {
 		return uri;
 	}
 
+	private static HttpHeaders initHeaders(HttpServerRequest channel) {
+		NettyHeadersAdapter headersMap = new NettyHeadersAdapter(channel.requestHeaders());
+		return new HttpHeaders(headersMap);
+	}
+
 
 	@Override
 	public String getMethodValue() {
@@ -147,13 +149,6 @@ class ReactorServerHttpRequest extends AbstractServerHttpRequest {
 	}
 
 	@Override
-	@Nullable
-	public InetSocketAddress getLocalAddress() {
-		return this.request.hostAddress();
-	}
-
-	@Override
-	@Nullable
 	public InetSocketAddress getRemoteAddress() {
 		return this.request.remoteAddress();
 	}
@@ -187,11 +182,8 @@ class ReactorServerHttpRequest extends AbstractServerHttpRequest {
 	@Override
 	@Nullable
 	protected String initId() {
-		if (this.request instanceof Connection) {
-			return ((Connection) this.request).channel().id().asShortText() +
-					"-" + logPrefixIndex.incrementAndGet();
-		}
-		return null;
+		return this.request instanceof Connection ?
+				((Connection) this.request).channel().id().asShortText() : null;
 	}
 
 }

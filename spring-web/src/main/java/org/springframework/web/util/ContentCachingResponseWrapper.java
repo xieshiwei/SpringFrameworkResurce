@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2019 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.lang.Nullable;
 import org.springframework.util.FastByteArrayOutputStream;
 
@@ -52,6 +53,8 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 	@Nullable
 	private PrintWriter writer;
 
+	private int statusCode = HttpServletResponse.SC_OK;
+
 	@Nullable
 	private Integer contentLength;
 
@@ -66,6 +69,19 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 
 
 	@Override
+	public void setStatus(int sc) {
+		super.setStatus(sc);
+		this.statusCode = sc;
+	}
+
+	@SuppressWarnings("deprecation")
+	@Override
+	public void setStatus(int sc, String sm) {
+		super.setStatus(sc, sm);
+		this.statusCode = sc;
+	}
+
+	@Override
 	public void sendError(int sc) throws IOException {
 		copyBodyToResponse(false);
 		try {
@@ -75,6 +91,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 			// Possibly on Tomcat when called too late: fall back to silent setStatus
 			super.setStatus(sc);
 		}
+		this.statusCode = sc;
 	}
 
 	@Override
@@ -88,6 +105,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 			// Possibly on Tomcat when called too late: fall back to silent setStatus
 			super.setStatus(sc, msg);
 		}
+		this.statusCode = sc;
 	}
 
 	@Override
@@ -128,7 +146,6 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 	}
 
 	// Overrides Servlet 3.1 setContentLengthLong(long) at runtime
-	@Override
 	public void setContentLengthLong(long len) {
 		if (len > Integer.MAX_VALUE) {
 			throw new IllegalArgumentException("Content-Length exceeds ContentCachingResponseWrapper's maximum (" +
@@ -161,11 +178,9 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 
 	/**
 	 * Return the status code as specified on the response.
-	 * @deprecated as of 5.2 in favor of {@link HttpServletResponse#getStatus()}
 	 */
-	@Deprecated
 	public int getStatusCode() {
-		return getStatus();
+		return this.statusCode;
 	}
 
 	/**
@@ -209,7 +224,9 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 		if (this.content.size() > 0) {
 			HttpServletResponse rawResponse = (HttpServletResponse) getResponse();
 			if ((complete || this.contentLength != null) && !rawResponse.isCommitted()) {
-				rawResponse.setContentLength(complete ? this.content.size() : this.contentLength);
+				if (rawResponse.getHeader(HttpHeaders.TRANSFER_ENCODING) == null) {
+					rawResponse.setContentLength(complete ? this.content.size() : this.contentLength);
+				}
 				this.contentLength = null;
 			}
 			this.content.writeTo(rawResponse.getOutputStream());

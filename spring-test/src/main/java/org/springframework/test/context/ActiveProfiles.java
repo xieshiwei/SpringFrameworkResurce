@@ -31,12 +31,8 @@ import org.springframework.core.annotation.AliasFor;
  * an {@link org.springframework.context.ApplicationContext ApplicationContext}
  * for test classes.
  *
- * <p>This annotation may be used as a <em>meta-annotation</em> to create custom
- * <em>composed annotations</em>.
- *
- * <p>As of Spring Framework 5.3, this annotation will be inherited from an
- * enclosing test class by default. See
- * {@link NestedTestConfiguration @NestedTestConfiguration} for details.
+ * <p>As of Spring Framework 4.0, this annotation may be used as a
+ * <em>meta-annotation</em> to create custom <em>composed annotations</em>.
  *
  * @author Sam Brannen
  * @since 3.1

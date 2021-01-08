@@ -325,7 +325,7 @@ public abstract class AbstractSockJsSession implements SockJsSession {
 		try {
 			writeFrameInternal(frame);
 		}
-		catch (Exception ex) {
+		catch (Throwable ex) {
 			logWriteFrameFailure(ex);
 			try {
 				// Force disconnect (so we won't try to send close frame)

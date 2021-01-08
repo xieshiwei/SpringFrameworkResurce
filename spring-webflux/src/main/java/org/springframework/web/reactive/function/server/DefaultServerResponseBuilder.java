@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
@@ -42,9 +41,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ReactiveHttpOutputMessage;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.codec.HttpMessageWriter;
+import org.springframework.http.server.reactive.AbstractServerHttpResponse;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.util.Assert;
@@ -60,7 +59,6 @@ import org.springframework.web.server.ServerWebExchange;
  *
  * @author Arjen Poutsma
  * @author Juergen Hoeller
- * @author Sebastien Deleuze
  * @since 5.0
  */
 class DefaultServerResponseBuilder implements ServerResponse.BodyBuilder {
@@ -219,55 +217,62 @@ class DefaultServerResponseBuilder implements ServerResponse.BodyBuilder {
 	public Mono<ServerResponse> build(
 			BiFunction<ServerWebExchange, ServerResponse.Context, Mono<Void>> writeFunction) {
 
-		return Mono.just(new WriterFunctionResponse(
-				this.statusCode, this.headers, this.cookies, writeFunction));
-	}
-
-	@Override
-	public Mono<ServerResponse> bodyValue(Object body) {
-		return initBuilder(body, BodyInserters.fromValue(body));
+		return Mono.just(
+				new WriterFunctionResponse(this.statusCode, this.headers, this.cookies, writeFunction));
 	}
 
 	@Override
 	public <T, P extends Publisher<T>> Mono<ServerResponse> body(P publisher, Class<T> elementClass) {
-		return initBuilder(publisher, BodyInserters.fromPublisher(publisher, elementClass));
-	}
+		Assert.notNull(publisher, "Publisher must not be null");
+		Assert.notNull(elementClass, "Element Class must not be null");
 
-	@Override
-	public <T, P extends Publisher<T>> Mono<ServerResponse> body(P publisher, ParameterizedTypeReference<T> typeRef) {
-		return initBuilder(publisher, BodyInserters.fromPublisher(publisher, typeRef));
-	}
-
-	@Override
-	public Mono<ServerResponse> body(Object producer, Class<?> elementClass) {
-		return initBuilder(producer, BodyInserters.fromProducer(producer, elementClass));
-	}
-
-	@Override
-	public Mono<ServerResponse> body(Object producer, ParameterizedTypeReference<?> elementTypeRef) {
-		return initBuilder(producer, BodyInserters.fromProducer(producer, elementTypeRef));
-	}
-
-	private  <T> Mono<ServerResponse> initBuilder(T entity, BodyInserter<T, ReactiveHttpOutputMessage> inserter) {
-		return new DefaultEntityResponseBuilder<>(entity, inserter)
+		return new DefaultEntityResponseBuilder<>(publisher,
+				BodyInserters.fromPublisher(publisher, elementClass))
 				.status(this.statusCode)
 				.headers(this.headers)
 				.cookies(cookies -> cookies.addAll(this.cookies))
 				.hints(hints -> hints.putAll(this.hints))
 				.build()
-				.map(Function.identity());
+				.map(entityResponse -> entityResponse);
+	}
+
+	@Override
+	public <T, P extends Publisher<T>> Mono<ServerResponse> body(P publisher,
+			ParameterizedTypeReference<T> typeReference) {
+
+		Assert.notNull(publisher, "Publisher must not be null");
+		Assert.notNull(typeReference, "ParameterizedTypeReference must not be null");
+
+		return new DefaultEntityResponseBuilder<>(publisher,
+				BodyInserters.fromPublisher(publisher, typeReference))
+				.status(this.statusCode)
+				.headers(this.headers)
+				.cookies(cookies -> cookies.addAll(this.cookies))
+				.hints(hints -> hints.putAll(this.hints))
+				.build()
+				.map(entityResponse -> entityResponse);
+	}
+
+	@Override
+	public Mono<ServerResponse> syncBody(Object body) {
+		Assert.notNull(body, "Body must not be null");
+		Assert.isTrue(!(body instanceof Publisher),
+				"Please specify the element class by using body(Publisher, Class)");
+
+		return new DefaultEntityResponseBuilder<>(body,
+				BodyInserters.fromObject(body))
+				.status(this.statusCode)
+				.headers(this.headers)
+				.cookies(cookies -> cookies.addAll(this.cookies))
+				.hints(hints -> hints.putAll(this.hints))
+				.build()
+				.map(entityResponse -> entityResponse);
 	}
 
 	@Override
 	public Mono<ServerResponse> body(BodyInserter<?, ? super ServerHttpResponse> inserter) {
-		return Mono.just(new BodyInserterResponse<>(
-				this.statusCode, this.headers, this.cookies, inserter, this.hints));
-	}
-
-	@Override
-	@Deprecated
-	public Mono<ServerResponse> syncBody(Object body) {
-		return bodyValue(body);
+		return Mono.just(
+				new BodyInserterResponse<>(this.statusCode, this.headers, this.cookies, inserter, this.hints));
 	}
 
 	@Override
@@ -278,7 +283,7 @@ class DefaultServerResponseBuilder implements ServerResponse.BodyBuilder {
 				.cookies(cookies -> cookies.addAll(this.cookies))
 				.modelAttributes(modelAttributes)
 				.build()
-				.map(Function.identity());
+				.map(renderingResponse -> renderingResponse);
 	}
 
 	@Override
@@ -289,7 +294,7 @@ class DefaultServerResponseBuilder implements ServerResponse.BodyBuilder {
 				.cookies(cookies -> cookies.addAll(this.cookies))
 				.modelAttributes(model)
 				.build()
-				.map(Function.identity());
+				.map(renderingResponse -> renderingResponse);
 	}
 
 
@@ -325,11 +330,6 @@ class DefaultServerResponseBuilder implements ServerResponse.BodyBuilder {
 		}
 
 		@Override
-		public int rawStatusCode() {
-			return this.statusCode;
-		}
-
-		@Override
 		public final HttpHeaders headers() {
 			return this.headers;
 		}
@@ -353,7 +353,17 @@ class DefaultServerResponseBuilder implements ServerResponse.BodyBuilder {
 		}
 
 		private void writeStatusAndHeaders(ServerHttpResponse response) {
-			response.setRawStatusCode(this.statusCode);
+			if (response instanceof AbstractServerHttpResponse) {
+				((AbstractServerHttpResponse) response).setStatusCodeValue(this.statusCode);
+			}
+			else {
+				HttpStatus status = HttpStatus.resolve(this.statusCode);
+				if (status == null) {
+					throw new IllegalStateException(
+							"Unresolvable HttpStatus for general ServerHttpResponse: " + this.statusCode);
+				}
+				response.setStatusCode(status);
+			}
 			copy(this.headers, response.getHeaders());
 			copy(this.cookies, response.getCookies());
 		}

@@ -20,7 +20,6 @@ package org.springframework.core;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -67,7 +66,7 @@ public abstract class ParameterizedTypeReference<T> {
 	}
 
 	@Override
-	public boolean equals(@Nullable Object other) {
+	public boolean equals(Object other) {
 		return (this == other || (other instanceof ParameterizedTypeReference &&
 				this.type.equals(((ParameterizedTypeReference<?>) other).type)));
 	}

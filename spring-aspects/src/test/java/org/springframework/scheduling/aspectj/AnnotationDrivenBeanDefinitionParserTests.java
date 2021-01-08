@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2019 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,16 @@ package org.springframework.scheduling.aspectj;
 
 import java.util.function.Supplier;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import org.springframework.beans.DirectFieldAccessor;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.scheduling.config.TaskManagementConfigUtils;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
 
 /**
  * @author Stephane Nicoll
@@ -36,13 +36,13 @@ public class AnnotationDrivenBeanDefinitionParserTests {
 
 	private ConfigurableApplicationContext context;
 
-	@BeforeEach
+	@Before
 	public void setup() {
 		this.context = new ClassPathXmlApplicationContext(
 				"annotationDrivenContext.xml", AnnotationDrivenBeanDefinitionParserTests.class);
 	}
 
-	@AfterEach
+	@After
 	public void after() {
 		if (this.context != null) {
 			this.context.close();
@@ -51,7 +51,7 @@ public class AnnotationDrivenBeanDefinitionParserTests {
 
 	@Test
 	public void asyncAspectRegistered() {
-		assertThat(context.containsBean(TaskManagementConfigUtils.ASYNC_EXECUTION_ASPECT_BEAN_NAME)).isTrue();
+		assertTrue(context.containsBean(TaskManagementConfigUtils.ASYNC_EXECUTION_ASPECT_BEAN_NAME));
 	}
 
 	@Test
@@ -59,7 +59,7 @@ public class AnnotationDrivenBeanDefinitionParserTests {
 	public void asyncPostProcessorExecutorReference() {
 		Object executor = context.getBean("testExecutor");
 		Object aspect = context.getBean(TaskManagementConfigUtils.ASYNC_EXECUTION_ASPECT_BEAN_NAME);
-		assertThat(((Supplier) new DirectFieldAccessor(aspect).getPropertyValue("defaultExecutor")).get()).isSameAs(executor);
+		assertSame(executor, ((Supplier) new DirectFieldAccessor(aspect).getPropertyValue("defaultExecutor")).get());
 	}
 
 	@Test
@@ -67,7 +67,7 @@ public class AnnotationDrivenBeanDefinitionParserTests {
 	public void asyncPostProcessorExceptionHandlerReference() {
 		Object exceptionHandler = context.getBean("testExceptionHandler");
 		Object aspect = context.getBean(TaskManagementConfigUtils.ASYNC_EXECUTION_ASPECT_BEAN_NAME);
-		assertThat(((Supplier) new DirectFieldAccessor(aspect).getPropertyValue("exceptionHandler")).get()).isSameAs(exceptionHandler);
+		assertSame(exceptionHandler, ((Supplier) new DirectFieldAccessor(aspect).getPropertyValue("exceptionHandler")).get());
 	}
 
 }

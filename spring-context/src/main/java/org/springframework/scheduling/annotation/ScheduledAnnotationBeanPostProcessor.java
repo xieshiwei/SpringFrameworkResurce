@@ -19,7 +19,6 @@ package org.springframework.scheduling.annotation;
 import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -60,7 +59,6 @@ import org.springframework.core.MethodIntrospector;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.Trigger;
@@ -354,8 +352,7 @@ public class ScheduledAnnotationBeanPostProcessor
 		}
 
 		Class<?> targetClass = AopProxyUtils.ultimateTargetClass(bean);
-		if (!this.nonAnnotatedClasses.contains(targetClass) &&
-				AnnotationUtils.isCandidateClass(targetClass, Arrays.asList(Scheduled.class, Schedules.class))) {
+		if (!this.nonAnnotatedClasses.contains(targetClass)) {
 			Map<Method, Set<Scheduled>> annotatedMethods = MethodIntrospector.selectMethods(targetClass,
 					(MethodIntrospector.MetadataLookup<Set<Scheduled>>) method -> {
 						Set<Scheduled> scheduledMethods = AnnotatedElementUtils.getMergedRepeatableAnnotations(

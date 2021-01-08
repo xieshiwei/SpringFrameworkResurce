@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -44,7 +43,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpRange;
 import org.springframework.http.MediaType;
-import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.ResourceRegionHttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpRequest;
@@ -58,6 +56,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.util.StringValueResolver;
 import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.accept.ContentNegotiationManager;
+import org.springframework.web.accept.PathExtensionContentNegotiationStrategy;
+import org.springframework.web.accept.ServletPathExtensionContentNegotiationStrategy;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -129,7 +129,8 @@ public class ResourceHttpRequestHandler extends WebContentGenerator
 	@Nullable
 	private ContentNegotiationManager contentNegotiationManager;
 
-	private final Map<String, MediaType> mediaTypes = new HashMap<>(4);
+	@Nullable
+	private PathExtensionContentNegotiationStrategy contentNegotiationStrategy;
 
 	@Nullable
 	private CorsConfiguration corsConfiguration;
@@ -139,8 +140,6 @@ public class ResourceHttpRequestHandler extends WebContentGenerator
 
 	@Nullable
 	private StringValueResolver embeddedValueResolver;
-
-	private boolean useLastModified = true;
 
 
 	public ResourceHttpRequestHandler() {
@@ -263,11 +262,7 @@ public class ResourceHttpRequestHandler extends WebContentGenerator
 	 * media types for resources being served. If the manager contains a path
 	 * extension strategy it will be checked for registered file extension.
 	 * @since 4.3
-	 * @deprecated as of 5.2.4 in favor of using {@link #setMediaTypes(Map)}
-	 * with mappings possibly obtained from
-	 * {@link ContentNegotiationManager#getMediaTypeMappings()}.
 	 */
-	@Deprecated
 	public void setContentNegotiationManager(@Nullable ContentNegotiationManager contentNegotiationManager) {
 		this.contentNegotiationManager = contentNegotiationManager;
 	}
@@ -275,36 +270,10 @@ public class ResourceHttpRequestHandler extends WebContentGenerator
 	/**
 	 * Return the configured content negotiation manager.
 	 * @since 4.3
-	 * @deprecated as of 5.2.4.
 	 */
 	@Nullable
-	@Deprecated
 	public ContentNegotiationManager getContentNegotiationManager() {
 		return this.contentNegotiationManager;
-	}
-
-	/**
-	 * Add mappings between file extensions, extracted from the filename of a
-	 * static {@link Resource}, and corresponding media type  to set on the
-	 * response.
-	 * <p>Use of this method is typically not necessary since mappings are
-	 * otherwise determined via
-	 * {@link javax.servlet.ServletContext#getMimeType(String)} or via
-	 * {@link MediaTypeFactory#getMediaType(Resource)}.
-	 * @param mediaTypes media type mappings
-	 * @since 5.2.4
-	 */
-	public void setMediaTypes(Map<String, MediaType> mediaTypes) {
-		mediaTypes.forEach((ext, mediaType) ->
-				this.mediaTypes.put(ext.toLowerCase(Locale.ENGLISH), mediaType));
-	}
-
-	/**
-	 * Return the {@link #setMediaTypes(Map) configured} media types.
-	 * @since 5.2.4
-	 */
-	public Map<String, MediaType> getMediaTypes() {
-		return this.mediaTypes;
 	}
 
 	/**
@@ -348,27 +317,6 @@ public class ResourceHttpRequestHandler extends WebContentGenerator
 		this.embeddedValueResolver = resolver;
 	}
 
-	/**
-	 * Return whether the {@link Resource#lastModified()} information is used
-	 * to drive HTTP responses when serving static resources.
-	 * @since 5.3
-	 */
-	public boolean isUseLastModified() {
-		return this.useLastModified;
-	}
-
-	/**
-	 * Set whether we should look at the {@link Resource#lastModified()}
-	 * when serving resources and use this information to drive {@code "Last-Modified"}
-	 * HTTP response headers.
-	 * <p>This option is enabled by default and should be turned off if the metadata of
-	 * the static files should be ignored.
-	 * @param useLastModified whether to use the resource last-modified information.
-	 * @since 5.3
-	 */
-	public void setUseLastModified(boolean useLastModified) {
-		this.useLastModified = useLastModified;
-	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
@@ -396,17 +344,7 @@ public class ResourceHttpRequestHandler extends WebContentGenerator
 			this.resourceRegionHttpMessageConverter = new ResourceRegionHttpMessageConverter();
 		}
 
-		ContentNegotiationManager manager = getContentNegotiationManager();
-		if (manager != null) {
-			setMediaTypes(manager.getMediaTypeMappings());
-		}
-
-		@SuppressWarnings("deprecation")
-		org.springframework.web.accept.PathExtensionContentNegotiationStrategy strategy =
-				initContentNegotiationStrategy();
-		if (strategy != null) {
-			setMediaTypes(strategy.getMediaTypes());
-		}
+		this.contentNegotiationStrategy = initContentNegotiationStrategy();
 	}
 
 	private void resolveResourceLocations() {
@@ -474,19 +412,25 @@ public class ResourceHttpRequestHandler extends WebContentGenerator
 	}
 
 	/**
-	 * Initialize the strategy to use to determine the media type for a resource.
-	 * @deprecated as of 5.2.4 this method returns {@code null}, and if a
-	 * sub-class returns an actual instance,the instance is used only as a
-	 * source of media type mappings, if it contains any. Please, use
-	 * {@link #setMediaTypes(Map)} instead, or if you need to change behavior,
-	 * you can override {@link #getMediaType(HttpServletRequest, Resource)}.
+	 * Initialize the content negotiation strategy depending on the {@code ContentNegotiationManager}
+	 * setup and the availability of a {@code ServletContext}.
+	 * @see ServletPathExtensionContentNegotiationStrategy
+	 * @see PathExtensionContentNegotiationStrategy
 	 */
-	@Nullable
-	@Deprecated
-	@SuppressWarnings("deprecation")
-	protected org.springframework.web.accept.PathExtensionContentNegotiationStrategy initContentNegotiationStrategy() {
-		return null;
+	protected PathExtensionContentNegotiationStrategy initContentNegotiationStrategy() {
+		Map<String, MediaType> mediaTypes = null;
+		if (getContentNegotiationManager() != null) {
+			PathExtensionContentNegotiationStrategy strategy =
+					getContentNegotiationManager().getStrategy(PathExtensionContentNegotiationStrategy.class);
+			if (strategy != null) {
+				mediaTypes = new HashMap<>(strategy.getMediaTypes());
+			}
+		}
+		return (getServletContext() != null ?
+				new ServletPathExtensionContentNegotiationStrategy(getServletContext(), mediaTypes) :
+				new PathExtensionContentNegotiationStrategy(mediaTypes));
 	}
+
 
 	/**
 	 * Processes a resource request.
@@ -521,7 +465,7 @@ public class ResourceHttpRequestHandler extends WebContentGenerator
 		checkRequest(request);
 
 		// Header phase
-		if (isUseLastModified() && new ServletWebRequest(request, response).checkNotModified(resource.lastModified())) {
+		if (new ServletWebRequest(request, response).checkNotModified(resource.lastModified())) {
 			logger.trace("Resource not modified");
 			return;
 		}
@@ -709,40 +653,17 @@ public class ResourceHttpRequestHandler extends WebContentGenerator
 
 	/**
 	 * Determine the media type for the given request and the resource matched
-	 * to it. This implementation tries to determine the MediaType using one of
-	 * the following lookups based on the resource filename and its path
-	 * extension:
-	 * <ol>
-	 * <li>{@link javax.servlet.ServletContext#getMimeType(String)}
-	 * <li>{@link #getMediaTypes()}
-	 * <li>{@link MediaTypeFactory#getMediaType(String)}
-	 * </ol>
+	 * to it. This implementation tries to determine the MediaType based on the
+	 * file extension of the Resource via
+	 * {@link ServletPathExtensionContentNegotiationStrategy#getMediaTypeForResource}.
 	 * @param request the current request
 	 * @param resource the resource to check
 	 * @return the corresponding media type, or {@code null} if none found
 	 */
 	@Nullable
 	protected MediaType getMediaType(HttpServletRequest request, Resource resource) {
-		MediaType result = null;
-		String mimeType = request.getServletContext().getMimeType(resource.getFilename());
-		if (StringUtils.hasText(mimeType)) {
-			result = MediaType.parseMediaType(mimeType);
-		}
-		if (result == null || MediaType.APPLICATION_OCTET_STREAM.equals(result)) {
-			MediaType mediaType = null;
-			String filename = resource.getFilename();
-			String ext = StringUtils.getFilenameExtension(filename);
-			if (ext != null) {
-				mediaType = this.mediaTypes.get(ext.toLowerCase(Locale.ENGLISH));
-			}
-			if (mediaType == null) {
-				mediaType = MediaTypeFactory.getMediaType(filename).orElse(null);
-			}
-			if (mediaType != null) {
-				result = mediaType;
-			}
-		}
-		return result;
+		return (this.contentNegotiationStrategy != null ?
+				this.contentNegotiationStrategy.getMediaTypeForResource(resource) : null);
 	}
 
 	/**

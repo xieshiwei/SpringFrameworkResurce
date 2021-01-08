@@ -25,16 +25,15 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.mock.web.test.MockHttpServletRequest;
+import org.springframework.mock.web.test.MockHttpServletResponse;
 import org.springframework.web.bind.ServletRequestBindingException;
-import org.springframework.web.testfixture.servlet.MockHttpServletRequest;
-import org.springframework.web.testfixture.servlet.MockHttpServletResponse;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.*;
 
 /**
  * Unit tests for {@code ResourceUrlEncodingFilter}.
@@ -48,7 +47,7 @@ public class ResourceUrlEncodingFilterTests {
 	private ResourceUrlProvider urlProvider;
 
 
-	@BeforeEach
+	@Before
 	public void createFilter() {
 		VersionResourceResolver versionResolver = new VersionResourceResolver();
 		versionResolver.setStrategyMap(Collections.singletonMap("/**", new ContentVersionStrategy()));
@@ -99,7 +98,7 @@ public class ResourceUrlEncodingFilterTests {
 			request.setRequestURI("/forwarded");
 			request.setContextPath("/");
 			String result = ((HttpServletResponse) res).encodeURL("/context/resources/bar.css");
-			assertThat(result).isEqualTo("/context/resources/bar-11e16cf79faee7ac698c805cf28248d2.css");
+			assertEquals("/context/resources/bar-11e16cf79faee7ac698c805cf28248d2.css", result);
 		});
 	}
 
@@ -166,14 +165,18 @@ public class ResourceUrlEncodingFilterTests {
 		request.setRequestURI("/a/b/../logo.png");
 		request.setServletPath("/a/logo.png");
 
-		this.filter.doFilter(request, new MockHttpServletResponse(), (req, res) -> {
-			ResourceUrlProviderExposingInterceptor interceptor =
-					new ResourceUrlProviderExposingInterceptor(this.urlProvider);
+			this.filter.doFilter(request, new MockHttpServletResponse(), (req, res) -> {
+				try {
+					ResourceUrlProviderExposingInterceptor interceptor =
+							new ResourceUrlProviderExposingInterceptor(this.urlProvider);
 
-			assertThatThrownBy(() -> interceptor.preHandle((HttpServletRequest) req, (HttpServletResponse) res, null))
-					.isInstanceOf(ServletRequestBindingException.class);
-
-		});
+					interceptor.preHandle((HttpServletRequest) req, (HttpServletResponse) res, new Object());
+					fail();
+				}
+				catch (Exception ex) {
+					assertEquals(ServletRequestBindingException.class, ex.getClass());
+				}
+			});
 	}
 
 	private void testEncodeUrl(MockHttpServletRequest request, String url, String expected)
@@ -182,8 +185,9 @@ public class ResourceUrlEncodingFilterTests {
 		FilterChain chain = (req, res) -> {
 			req.setAttribute(ResourceUrlProviderExposingInterceptor.RESOURCE_URL_PROVIDER_ATTR, this.urlProvider);
 			String result = ((HttpServletResponse) res).encodeURL(url);
-			assertThat(result).isEqualTo(expected);
+			assertEquals(expected, result);
 		};
+
 		this.filter.doFilter(request, new MockHttpServletResponse(), chain);
 	}
 

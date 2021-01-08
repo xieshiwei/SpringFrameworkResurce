@@ -20,7 +20,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -360,13 +359,12 @@ public class MessageHeaderAccessor {
 	}
 
 	private List<String> getMatchingHeaderNames(String pattern, @Nullable Map<String, Object> headers) {
-		if (headers == null) {
-			return Collections.emptyList();
-		}
 		List<String> matchingHeaderNames = new ArrayList<>();
-		for (String key : headers.keySet()) {
-			if (PatternMatchUtils.simpleMatch(pattern, key)) {
-				matchingHeaderNames.add(key);
+		if (headers != null) {
+			for (String key : headers.keySet()) {
+				if (PatternMatchUtils.simpleMatch(pattern, key)) {
+					matchingHeaderNames.add(key);
+				}
 			}
 		}
 		return matchingHeaderNames;

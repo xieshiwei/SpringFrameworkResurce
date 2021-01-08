@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public abstract class AbstractJdbcCall {
 	 * Has this operation been compiled? Compilation means at least checking
 	 * that a DataSource or JdbcTemplate has been provided.
 	 */
-	private volatile boolean compiled;
+	private volatile boolean compiled = false;
 
 	/** The generated string used for call statement. */
 	@Nullable
@@ -315,7 +315,8 @@ public abstract class AbstractJdbcCall {
 		this.callMetaDataContext.initializeMetaData(dataSource);
 
 		// Iterate over the declared RowMappers and register the corresponding SqlParameter
-		this.declaredRowMappers.forEach((key, value) -> this.declaredParameters.add(this.callMetaDataContext.createReturnResultSetParameter(key, value)));
+		this.declaredRowMappers.forEach((key, value) ->
+			this.declaredParameters.add(this.callMetaDataContext.createReturnResultSetParameter(key, value)));
 		this.callMetaDataContext.processParameters(this.declaredParameters);
 
 		this.callString = this.callMetaDataContext.createCallString();

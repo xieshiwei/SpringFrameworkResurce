@@ -16,8 +16,8 @@
 
 package org.springframework.messaging.support;
 
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -190,10 +190,10 @@ public class NativeMessageHeaderAccessor extends MessageHeaderAccessor {
 			return;
 		}
 		if (map == null) {
-			map = new LinkedMultiValueMap<>(3);
+			map = new LinkedMultiValueMap<>(4);
 			setHeader(NATIVE_HEADERS, map);
 		}
-		List<String> values = new ArrayList<>(1);
+		List<String> values = new LinkedList<>();
 		values.add(value);
 		if (!ObjectUtils.nullSafeEquals(values, getHeader(name))) {
 			setModified(true);
@@ -215,10 +215,10 @@ public class NativeMessageHeaderAccessor extends MessageHeaderAccessor {
 		}
 		Map<String, List<String>> nativeHeaders = getNativeHeaders();
 		if (nativeHeaders == null) {
-			nativeHeaders = new LinkedMultiValueMap<>(3);
+			nativeHeaders = new LinkedMultiValueMap<>(4);
 			setHeader(NATIVE_HEADERS, nativeHeaders);
 		}
-		List<String> values = nativeHeaders.computeIfAbsent(name, k -> new ArrayList<>(1));
+		List<String> values = nativeHeaders.computeIfAbsent(name, k -> new LinkedList<>());
 		values.add(value);
 		setModified(true);
 	}

@@ -30,7 +30,6 @@ import org.springframework.lang.NonNull;
  * @see DefaultListableBeanFactory#setAllowBeanDefinitionOverriding
  * @see DefaultListableBeanFactory#registerBeanDefinition
  */
-@SuppressWarnings("serial")
 public class BeanDefinitionOverrideException extends BeanDefinitionStoreException {
 
 	private final BeanDefinition beanDefinition;

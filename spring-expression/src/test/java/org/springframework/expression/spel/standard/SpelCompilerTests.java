@@ -18,7 +18,7 @@ package org.springframework.expression.spel.standard;
 
 import java.util.stream.IntStream;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import org.springframework.core.Ordered;
 import org.springframework.expression.Expression;
@@ -27,7 +27,7 @@ import org.springframework.expression.spel.SpelCompilerMode;
 import org.springframework.expression.spel.SpelParserConfiguration;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
 
 /**
  * Tests for the {@link SpelCompiler}.
@@ -36,10 +36,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Andy Clement
  * @since 5.1.14
  */
-class SpelCompilerTests {
+public class SpelCompilerTests {
 
 	@Test  // gh-24357
-	void expressionCompilesWhenMethodComesFromPublicInterface() {
+	public void expressionCompilesWhenMethodComesFromPublicInterface() {
 		SpelParserConfiguration config = new SpelParserConfiguration(SpelCompilerMode.IMMEDIATE, null);
 		SpelExpressionParser parser = new SpelExpressionParser(config);
 
@@ -47,11 +47,11 @@ class SpelCompilerTests {
 		Expression expression = parser.parseExpression("order");
 
 		// Evaluate the expression multiple times to ensure that it gets compiled.
-		IntStream.rangeClosed(1, 5).forEach(i -> assertThat(expression.getValue(component)).isEqualTo(42));
+		IntStream.rangeClosed(1, 5).forEach(i -> assertEquals(42, expression.getValue(component)));
 	}
 
 	@Test  // gh-25706
-	void defaultMethodInvocation() {
+	public void defaultMethodInvocation() {
 		SpelParserConfiguration config = new SpelParserConfiguration(SpelCompilerMode.IMMEDIATE, null);
 		SpelExpressionParser parser = new SpelExpressionParser(config);
 
@@ -60,19 +60,19 @@ class SpelCompilerTests {
 		context.setRootObject(item);
 
 		Expression expression = parser.parseExpression("#root.isEditable2()");
-		assertThat(SpelCompiler.compile(expression)).isFalse();
-		assertThat(expression.getValue(context)).isEqualTo(false);
-		assertThat(SpelCompiler.compile(expression)).isTrue();
+		assertFalse(SpelCompiler.compile(expression));
+		assertEquals(false, expression.getValue(context));
+		assertTrue(SpelCompiler.compile(expression));
 		SpelCompilationCoverageTests.assertIsCompiled(expression);
-		assertThat(expression.getValue(context)).isEqualTo(false);
+		assertEquals(false, expression.getValue(context));
 
 		context.setVariable("user", new User());
 		expression = parser.parseExpression("#root.isEditable(#user)");
-		assertThat(SpelCompiler.compile(expression)).isFalse();
-		assertThat(expression.getValue(context)).isEqualTo(true);
-		assertThat(SpelCompiler.compile(expression)).isTrue();
+		assertFalse(SpelCompiler.compile(expression));
+		assertEquals(true, expression.getValue(context));
+		assertTrue(SpelCompiler.compile(expression));
 		SpelCompilationCoverageTests.assertIsCompiled(expression);
-		assertThat(expression.getValue(context)).isEqualTo(true);
+		assertEquals(true, expression.getValue(context));
 	}
 
 

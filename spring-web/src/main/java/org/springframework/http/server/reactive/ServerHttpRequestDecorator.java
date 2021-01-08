@@ -98,12 +98,6 @@ public class ServerHttpRequestDecorator implements ServerHttpRequest {
 
 	@Override
 	@Nullable
-	public InetSocketAddress getLocalAddress() {
-		return getDelegate().getLocalAddress();
-	}
-
-	@Override
-	@Nullable
 	public InetSocketAddress getRemoteAddress() {
 		return getDelegate().getRemoteAddress();
 	}

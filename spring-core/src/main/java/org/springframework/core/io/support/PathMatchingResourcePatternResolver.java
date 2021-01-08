@@ -340,7 +340,7 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 			URL url = resourceUrls.nextElement();
 			result.add(convertClassLoaderURL(url));
 		}
-		if (!StringUtils.hasLength(path)) {
+		if ("".equals(path)) {
 			// The above result is likely to be incomplete, i.e. only containing file system references.
 			// We need to have pointers to each of the jar files on the classpath as well...
 			addAllClassLoaderJarRoots(cl, result);
@@ -432,6 +432,9 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 						// Possibly "c:" drive prefix on Windows, to be upper-cased for proper duplicate detection
 						filePath = StringUtils.capitalize(filePath);
 					}
+					// # can appear in directories/filenames, java.net.URL should not treat it as a fragment
+					filePath = StringUtils.replace(filePath, "#", "%23");
+					// Build URL that points to the root of the jar file
 					UrlResource jarResource = new UrlResource(ResourceUtils.JAR_URL_PREFIX +
 							ResourceUtils.FILE_URL_PREFIX + filePath + ResourceUtils.JAR_URL_SEPARATOR);
 					// Potentially overlapping with URLClassLoader.getURLs() result above!
@@ -639,7 +642,7 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 			if (logger.isTraceEnabled()) {
 				logger.trace("Looking for matching resources in jar file [" + jarFileUrl + "]");
 			}
-			if (StringUtils.hasLength(rootEntryPath) && !rootEntryPath.endsWith("/")) {
+			if (!"".equals(rootEntryPath) && !rootEntryPath.endsWith("/")) {
 				// Root entry path must end with slash to allow for proper matching.
 				// The Sun JRE does not return a slash here, but BEA JRockit does.
 				rootEntryPath = rootEntryPath + "/";

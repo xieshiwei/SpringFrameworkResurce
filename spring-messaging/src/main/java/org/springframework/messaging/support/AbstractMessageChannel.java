@@ -87,20 +87,19 @@ public abstract class AbstractMessageChannel implements MessageChannel, Intercep
 
 	@Override
 	public void setInterceptors(List<ChannelInterceptor> interceptors) {
-		Assert.noNullElements(interceptors, "'interceptors' must not contain null elements");
 		this.interceptors.clear();
 		this.interceptors.addAll(interceptors);
 	}
 
 	@Override
 	public void addInterceptor(ChannelInterceptor interceptor) {
-		Assert.notNull(interceptor, "'interceptor' must not be null");
+		Assert.notNull(interceptor, "ChannelInterceptor must not be null");
 		this.interceptors.add(interceptor);
 	}
 
 	@Override
 	public void addInterceptor(int index, ChannelInterceptor interceptor) {
-		Assert.notNull(interceptor, "'interceptor' must not be null");
+		Assert.notNull(interceptor, "ChannelInterceptor must not be null");
 		this.interceptors.add(index, interceptor);
 	}
 

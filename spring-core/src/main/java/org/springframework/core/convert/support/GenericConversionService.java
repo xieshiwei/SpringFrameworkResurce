@@ -17,13 +17,12 @@
 package org.springframework.core.convert.support;
 
 import java.lang.reflect.Array;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -459,7 +458,7 @@ public class GenericConversionService implements ConfigurableConversionService {
 		}
 
 		@Override
-		public boolean equals(@Nullable Object other) {
+		public boolean equals(Object other) {
 			if (this == other) {
 				return true;
 			}
@@ -502,7 +501,7 @@ public class GenericConversionService implements ConfigurableConversionService {
 
 		private final Set<GenericConverter> globalConverters = new LinkedHashSet<>();
 
-		private final Map<ConvertiblePair, ConvertersForPair> converters = new LinkedHashMap<>(36);
+		private final Map<ConvertiblePair, ConvertersForPair> converters = new LinkedHashMap<>(256);
 
 		public void add(GenericConverter converter) {
 			Set<ConvertiblePair> convertibleTypes = converter.getConvertibleTypes();
@@ -513,14 +512,18 @@ public class GenericConversionService implements ConfigurableConversionService {
 			}
 			else {
 				for (ConvertiblePair convertiblePair : convertibleTypes) {
-					ConvertersForPair convertersForPair = getMatchableConverters(convertiblePair);
-					convertersForPair.add(converter);
+					getMatchableConverters(convertiblePair).add(converter);
 				}
 			}
 		}
 
 		private ConvertersForPair getMatchableConverters(ConvertiblePair convertiblePair) {
-			return this.converters.computeIfAbsent(convertiblePair, k -> new ConvertersForPair());
+			ConvertersForPair convertersForPair = this.converters.get(convertiblePair);
+			if (convertersForPair == null) {
+				convertersForPair = new ConvertersForPair();
+				this.converters.put(convertiblePair, convertersForPair);
+			}
+			return convertersForPair;
 		}
 
 		public void remove(Class<?> sourceType, Class<?> targetType) {
@@ -652,7 +655,7 @@ public class GenericConversionService implements ConfigurableConversionService {
 	 */
 	private static class ConvertersForPair {
 
-		private final Deque<GenericConverter> converters = new ArrayDeque<>(1);
+		private final LinkedList<GenericConverter> converters = new LinkedList<>();
 
 		public void add(GenericConverter converter) {
 			this.converters.addFirst(converter);

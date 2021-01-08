@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.config.DestructionAwareBeanPostProcessor;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -86,7 +87,7 @@ class DisposableBeanAdapter implements DisposableBean, Runnable, Serializable {
 	private transient Method destroyMethod;
 
 	@Nullable
-	private final List<DestructionAwareBeanPostProcessor> beanPostProcessors;
+	private List<DestructionAwareBeanPostProcessor> beanPostProcessors;
 
 
 	/**
@@ -98,7 +99,7 @@ class DisposableBeanAdapter implements DisposableBean, Runnable, Serializable {
 	 * (potentially DestructionAwareBeanPostProcessor), if any
 	 */
 	public DisposableBeanAdapter(Object bean, String beanName, RootBeanDefinition beanDefinition,
-			List<DestructionAwareBeanPostProcessor> postProcessors, @Nullable AccessControlContext acc) {
+			List<BeanPostProcessor> postProcessors, @Nullable AccessControlContext acc) {
 
 		Assert.notNull(bean, "Disposable bean must not be null");
 		this.bean = bean;
@@ -141,9 +142,7 @@ class DisposableBeanAdapter implements DisposableBean, Runnable, Serializable {
 	 * @param postProcessors the List of BeanPostProcessors
 	 * (potentially DestructionAwareBeanPostProcessor), if any
 	 */
-	public DisposableBeanAdapter(
-			Object bean, List<DestructionAwareBeanPostProcessor> postProcessors, AccessControlContext acc) {
-
+	public DisposableBeanAdapter(Object bean, List<BeanPostProcessor> postProcessors, AccessControlContext acc) {
 		Assert.notNull(bean, "Disposable bean must not be null");
 		this.bean = bean;
 		this.beanName = bean.getClass().getName();
@@ -214,15 +213,16 @@ class DisposableBeanAdapter implements DisposableBean, Runnable, Serializable {
 	 * @return the filtered List of DestructionAwareBeanPostProcessors
 	 */
 	@Nullable
-	private List<DestructionAwareBeanPostProcessor> filterPostProcessors(
-			List<DestructionAwareBeanPostProcessor> processors, Object bean) {
-
+	private List<DestructionAwareBeanPostProcessor> filterPostProcessors(List<BeanPostProcessor> processors, Object bean) {
 		List<DestructionAwareBeanPostProcessor> filteredPostProcessors = null;
 		if (!CollectionUtils.isEmpty(processors)) {
 			filteredPostProcessors = new ArrayList<>(processors.size());
-			for (DestructionAwareBeanPostProcessor processor : processors) {
-				if (processor.requiresDestruction(bean)) {
-					filteredPostProcessors.add(processor);
+			for (BeanPostProcessor processor : processors) {
+				if (processor instanceof DestructionAwareBeanPostProcessor) {
+					DestructionAwareBeanPostProcessor dabpp = (DestructionAwareBeanPostProcessor) processor;
+					if (dabpp.requiresDestruction(bean)) {
+						filteredPostProcessors.add(dabpp);
+					}
 				}
 			}
 		}
@@ -397,11 +397,14 @@ class DisposableBeanAdapter implements DisposableBean, Runnable, Serializable {
 	 * @param bean the bean instance
 	 * @param postProcessors the post-processor candidates
 	 */
-	public static boolean hasApplicableProcessors(Object bean, List<DestructionAwareBeanPostProcessor> postProcessors) {
+	public static boolean hasApplicableProcessors(Object bean, List<BeanPostProcessor> postProcessors) {
 		if (!CollectionUtils.isEmpty(postProcessors)) {
-			for (DestructionAwareBeanPostProcessor processor : postProcessors) {
-				if (processor.requiresDestruction(bean)) {
-					return true;
+			for (BeanPostProcessor processor : postProcessors) {
+				if (processor instanceof DestructionAwareBeanPostProcessor) {
+					DestructionAwareBeanPostProcessor dabpp = (DestructionAwareBeanPostProcessor) processor;
+					if (dabpp.requiresDestruction(bean)) {
+						return true;
+					}
 				}
 			}
 		}

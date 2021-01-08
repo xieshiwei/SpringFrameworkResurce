@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package org.springframework.jdbc.core.metadata;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +35,6 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSourceUtils;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 
 /**
  * Class to manage context meta-data used for the configuration
@@ -306,8 +305,12 @@ public class TableMetaDataContext {
 						getTableName() + "' so an insert statement can't be generated");
 			}
 		}
-		String params = String.join(", ", Collections.nCopies(columnCount, "?"));
-		insertStatement.append(params);
+		for (int i = 0; i < columnCount; i++) {
+			if (i > 0) {
+				insertStatement.append(", ");
+			}
+			insertStatement.append("?");
+		}
 		insertStatement.append(")");
 		return insertStatement.toString();
 	}
@@ -319,7 +322,7 @@ public class TableMetaDataContext {
 	public int[] createInsertTypes() {
 		int[] types = new int[getTableColumns().size()];
 		List<TableParameterMetaData> parameters = obtainMetaDataProvider().getTableParameterMetaData();
-		Map<String, TableParameterMetaData> parameterMap = CollectionUtils.newLinkedHashMap(parameters.size());
+		Map<String, TableParameterMetaData> parameterMap = new LinkedHashMap<>(parameters.size());
 		for (TableParameterMetaData tpmd : parameters) {
 			parameterMap.put(tpmd.getParameterName().toUpperCase(), tpmd);
 		}

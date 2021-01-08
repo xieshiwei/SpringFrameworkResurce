@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -101,7 +100,7 @@ public abstract class CacheOperation implements BasicOperation {
 	 * @see #toString()
 	 */
 	@Override
-	public boolean equals(@Nullable Object other) {
+	public boolean equals(Object other) {
 		return (other instanceof CacheOperation && toString().equals(other.toString()));
 	}
 

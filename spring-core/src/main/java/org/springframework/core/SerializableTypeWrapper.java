@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,20 +51,12 @@ import org.springframework.util.ReflectionUtils;
  *
  * @author Phillip Webb
  * @author Juergen Hoeller
- * @author Sam Brannen
  * @since 4.0
  */
 final class SerializableTypeWrapper {
 
 	private static final Class<?>[] SUPPORTED_SERIALIZABLE_TYPES = {
 			GenericArrayType.class, ParameterizedType.class, TypeVariable.class, WildcardType.class};
-
-	/**
-	 * Whether this environment lives within a native image.
-	 * Exposed as a private static field rather than in a {@code NativeImageDetector.inNativeImage()} static method due to https://github.com/oracle/graal/issues/2594.
-	 * @see <a href="https://github.com/oracle/graal/blob/master/sdk/src/org.graalvm.nativeimage/src/org/graalvm/nativeimage/ImageInfo.java">ImageInfo.java</a>
-	 */
-	private static final boolean IN_NATIVE_IMAGE = (System.getProperty("org.graalvm.nativeimage.imagecode") != null);
 
 	static final ConcurrentReferenceHashMap<Type, Type> cache = new ConcurrentReferenceHashMap<>(256);
 
@@ -97,8 +89,8 @@ final class SerializableTypeWrapper {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T extends Type> T unwrap(T type) {
-		Type unwrapped = null;
-		if (type instanceof SerializableTypeProxy) {
+		Type unwrapped = type;
+		while (unwrapped instanceof SerializableTypeProxy) {
 			unwrapped = ((SerializableTypeProxy) type).getTypeProvider().getType();
 		}
 		return (unwrapped != null ? (T) unwrapped : type);
@@ -116,9 +108,9 @@ final class SerializableTypeWrapper {
 			// No serializable type wrapping necessary (e.g. for java.lang.Class)
 			return providedType;
 		}
-		if (IN_NATIVE_IMAGE || !Serializable.class.isAssignableFrom(Class.class)) {
+		if (GraalDetector.inImageCode() || !Serializable.class.isAssignableFrom(Class.class)) {
 			// Let's skip any wrapping attempts if types are generally not serializable in
-			// the current runtime environment (even java.lang.Class itself, e.g. on GraalVM native images)
+			// the current runtime environment (even java.lang.Class itself, e.g. on Graal)
 			return providedType;
 		}
 
@@ -192,25 +184,26 @@ final class SerializableTypeWrapper {
 
 		@Override
 		@Nullable
-		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-			switch (method.getName()) {
-				case "equals":
-					Object other = args[0];
-					// Unwrap proxies for speed
-					if (other instanceof Type) {
-						other = unwrap((Type) other);
-					}
-					return ObjectUtils.nullSafeEquals(this.provider.getType(), other);
-				case "hashCode":
-					return ObjectUtils.nullSafeHashCode(this.provider.getType());
-				case "getTypeProvider":
-					return this.provider;
+		public Object invoke(Object proxy, Method method, @Nullable Object[] args) throws Throwable {
+			if (method.getName().equals("equals") && args != null) {
+				Object other = args[0];
+				// Unwrap proxies for speed
+				if (other instanceof Type) {
+					other = unwrap((Type) other);
+				}
+				return ObjectUtils.nullSafeEquals(this.provider.getType(), other);
+			}
+			else if (method.getName().equals("hashCode")) {
+				return ObjectUtils.nullSafeHashCode(this.provider.getType());
+			}
+			else if (method.getName().equals("getTypeProvider")) {
+				return this.provider;
 			}
 
-			if (Type.class == method.getReturnType() && ObjectUtils.isEmpty(args)) {
+			if (Type.class == method.getReturnType() && args == null) {
 				return forTypeProvider(new MethodInvokeTypeProvider(this.provider, method, -1));
 			}
-			else if (Type[].class == method.getReturnType() && ObjectUtils.isEmpty(args)) {
+			else if (Type[].class == method.getReturnType() && args == null) {
 				Type[] result = new Type[((Type[]) method.invoke(this.provider.getType())).length];
 				for (int i = 0; i < result.length; i++) {
 					result[i] = forTypeProvider(new MethodInvokeTypeProvider(this.provider, method, i));

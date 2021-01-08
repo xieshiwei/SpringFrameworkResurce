@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package org.springframework.web.reactive.handler;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import reactor.core.publisher.Mono;
 
@@ -107,16 +107,15 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping {
 	 */
 	@Nullable
 	protected Object lookupHandler(PathContainer lookupPath, ServerWebExchange exchange) throws Exception {
-		List<PathPattern> matches = null;
-		for (PathPattern pattern : this.handlerMap.keySet()) {
-			if (pattern.matches(lookupPath)) {
-				matches = (matches != null ? matches : new ArrayList<>());
-				matches.add(pattern);
-			}
-		}
-		if (matches == null) {
+
+		List<PathPattern> matches = this.handlerMap.keySet().stream()
+				.filter(key -> key.matches(lookupPath))
+				.collect(Collectors.toList());
+
+		if (matches.isEmpty()) {
 			return null;
 		}
+
 		if (matches.size() > 1) {
 			matches.sort(PathPattern.SPECIFICITY_COMPARATOR);
 			if (logger.isTraceEnabled()) {
@@ -126,14 +125,11 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping {
 
 		PathPattern pattern = matches.get(0);
 		PathContainer pathWithinMapping = pattern.extractPathWithinPattern(lookupPath);
-		PathPattern.PathMatchInfo matchInfo = pattern.matchAndExtract(lookupPath);
-		Assert.notNull(matchInfo, "Expected a match");
-
-		return handleMatch(this.handlerMap.get(pattern), pattern, pathWithinMapping, matchInfo, exchange);
+		return handleMatch(this.handlerMap.get(pattern), pattern, pathWithinMapping, exchange);
 	}
 
 	private Object handleMatch(Object handler, PathPattern bestMatch, PathContainer pathWithinMapping,
-			PathPattern.PathMatchInfo matchInfo, ServerWebExchange exchange) {
+			ServerWebExchange exchange) {
 
 		// Bean name or resolved handler?
 		if (handler instanceof String) {
@@ -146,7 +142,6 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping {
 		exchange.getAttributes().put(BEST_MATCHING_HANDLER_ATTRIBUTE, handler);
 		exchange.getAttributes().put(BEST_MATCHING_PATTERN_ATTRIBUTE, bestMatch);
 		exchange.getAttributes().put(PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE, pathWithinMapping);
-		exchange.getAttributes().put(URI_TEMPLATE_VARIABLES_ATTRIBUTE, matchInfo.getUriVariables());
 
 		return handler;
 	}

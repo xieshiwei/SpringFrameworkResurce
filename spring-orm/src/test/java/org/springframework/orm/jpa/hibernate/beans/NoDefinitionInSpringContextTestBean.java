@@ -18,7 +18,6 @@ package org.springframework.orm.jpa.hibernate.beans;
 
 public class NoDefinitionInSpringContextTestBean extends TestBean {
 
-	@SuppressWarnings("unused")
 	private NoDefinitionInSpringContextTestBean() {
 		throw new AssertionError("Unexpected call to the default constructor. " +
 				"Is Spring trying to instantiate this class by itself, even though it should delegate to the fallback producer?"

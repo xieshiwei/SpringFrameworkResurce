@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,8 @@ package org.springframework.core.codec;
 import java.util.Collections;
 import java.util.function.Consumer;
 
-import org.junit.jupiter.api.Test;
+import org.junit.After;
+import org.junit.Test;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
@@ -31,39 +32,48 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.LeakAwareDataBufferFactory;
+import org.springframework.core.io.buffer.support.DataBufferTestUtils;
 import org.springframework.core.io.support.ResourceRegion;
-import org.springframework.core.testfixture.io.buffer.AbstractLeakCheckingTests;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.assertj.core.api.Assertions.assertThat;
+import static java.nio.charset.StandardCharsets.*;
+import static org.junit.Assert.*;
 
 /**
  * Test cases for {@link ResourceRegionEncoder} class.
  * @author Brian Clozel
  */
-class ResourceRegionEncoderTests extends AbstractLeakCheckingTests {
+public class ResourceRegionEncoderTests  {
 
 	private ResourceRegionEncoder encoder = new ResourceRegionEncoder();
 
-	@Test
-	void canEncode() {
-		ResolvableType resourceRegion = ResolvableType.forClass(ResourceRegion.class);
-		MimeType allMimeType = MimeType.valueOf("*/*");
+	private LeakAwareDataBufferFactory bufferFactory = new LeakAwareDataBufferFactory();
 
-		assertThat(this.encoder.canEncode(ResolvableType.forClass(Resource.class),
-				MimeTypeUtils.APPLICATION_OCTET_STREAM)).isFalse();
-		assertThat(this.encoder.canEncode(ResolvableType.forClass(Resource.class), allMimeType)).isFalse();
-		assertThat(this.encoder.canEncode(resourceRegion, MimeTypeUtils.APPLICATION_OCTET_STREAM)).isTrue();
-		assertThat(this.encoder.canEncode(resourceRegion, allMimeType)).isTrue();
 
-		// SPR-15464
-		assertThat(this.encoder.canEncode(ResolvableType.NONE, null)).isFalse();
+	@After
+	public void tearDown() throws Exception {
+		this.bufferFactory.checkForLeaks();
 	}
 
 	@Test
-	void shouldEncodeResourceRegionFileResource() throws Exception {
+	public void canEncode() {
+		ResolvableType resourceRegion = ResolvableType.forClass(ResourceRegion.class);
+		MimeType allMimeType = MimeType.valueOf("*/*");
+
+		assertFalse(this.encoder.canEncode(ResolvableType.forClass(Resource.class),
+				MimeTypeUtils.APPLICATION_OCTET_STREAM));
+		assertFalse(this.encoder.canEncode(ResolvableType.forClass(Resource.class), allMimeType));
+		assertTrue(this.encoder.canEncode(resourceRegion, MimeTypeUtils.APPLICATION_OCTET_STREAM));
+		assertTrue(this.encoder.canEncode(resourceRegion, allMimeType));
+
+		// SPR-15464
+		assertFalse(this.encoder.canEncode(ResolvableType.NONE, null));
+	}
+
+	@Test
+	public void shouldEncodeResourceRegionFileResource() throws Exception {
 		ResourceRegion region = new ResourceRegion(
 				new ClassPathResource("ResourceRegionEncoderTests.txt", getClass()), 0, 6);
 		Flux<DataBuffer> result = this.encoder.encode(Mono.just(region), this.bufferFactory,
@@ -78,7 +88,7 @@ class ResourceRegionEncoderTests extends AbstractLeakCheckingTests {
 	}
 
 	@Test
-	void shouldEncodeMultipleResourceRegionsFileResource() {
+	public void shouldEncodeMultipleResourceRegionsFileResource() {
 		Resource resource = new ClassPathResource("ResourceRegionEncoderTests.txt", getClass());
 		Flux<ResourceRegion> regions = Flux.just(
 				new ResourceRegion(resource, 0, 6),
@@ -117,7 +127,7 @@ class ResourceRegionEncoderTests extends AbstractLeakCheckingTests {
 	}
 
 	@Test // gh-22107
-	void cancelWithoutDemandForMultipleResourceRegions() {
+	public void cancelWithoutDemandForMultipleResourceRegions() {
 		Resource resource = new ClassPathResource("ResourceRegionEncoderTests.txt", getClass());
 		Flux<ResourceRegion> regions = Flux.just(
 				new ResourceRegion(resource, 0, 6),
@@ -139,7 +149,7 @@ class ResourceRegionEncoderTests extends AbstractLeakCheckingTests {
 	}
 
 	@Test // gh-22107
-	void cancelWithoutDemandForSingleResourceRegion() {
+	public void cancelWithoutDemandForSingleResourceRegion() {
 		Resource resource = new ClassPathResource("ResourceRegionEncoderTests.txt", getClass());
 		Mono<ResourceRegion> regions = Mono.just(new ResourceRegion(resource, 0, 6));
 		String boundary = MimeTypeUtils.generateMultipartBoundaryString();
@@ -156,7 +166,7 @@ class ResourceRegionEncoderTests extends AbstractLeakCheckingTests {
 	}
 
 	@Test
-	void nonExisting() {
+	public void nonExisting() {
 		Resource resource = new ClassPathResource("ResourceRegionEncoderTests.txt", getClass());
 		Resource nonExisting = new ClassPathResource("does not exist", getClass());
 		Flux<ResourceRegion> regions = Flux.just(
@@ -181,9 +191,9 @@ class ResourceRegionEncoderTests extends AbstractLeakCheckingTests {
 
 	protected Consumer<DataBuffer> stringConsumer(String expected) {
 		return dataBuffer -> {
-			String value = dataBuffer.toString(UTF_8);
+			String value = DataBufferTestUtils.dumpString(dataBuffer, UTF_8);
 			DataBufferUtils.release(dataBuffer);
-			assertThat(value).isEqualTo(expected);
+			assertEquals(expected, value);
 		};
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2019 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,6 @@ import java.util.EventObject;
  *
  * @author Rod Johnson
  * @author Juergen Hoeller
- * @see org.springframework.context.ApplicationListener
- * @see org.springframework.context.event.EventListener
  */
 public abstract class ApplicationEvent extends EventObject {
 
@@ -37,9 +35,8 @@ public abstract class ApplicationEvent extends EventObject {
 
 
 	/**
-	 * Create a new {@code ApplicationEvent}.
-	 * @param source the object on which the event initially occurred or with
-	 * which the event is associated (never {@code null})
+	 * Create a new ApplicationEvent.
+	 * @param source the object on which the event initially occurred (never {@code null})
 	 */
 	public ApplicationEvent(Object source) {
 		super(source);
@@ -48,7 +45,7 @@ public abstract class ApplicationEvent extends EventObject {
 
 
 	/**
-	 * Return the system time in milliseconds when the event occurred.
+	 * Return the system time in milliseconds when the event happened.
 	 */
 	public final long getTimestamp() {
 		return this.timestamp;

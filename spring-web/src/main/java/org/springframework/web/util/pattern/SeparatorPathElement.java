@@ -62,12 +62,10 @@ class SeparatorPathElement extends PathElement {
 		return 1;
 	}
 
-	@Override
 	public String toString() {
 		return "Separator(" + this.separator + ")";
 	}
 
-	@Override
 	public char[] getChars() {
 		return new char[] {this.separator};
 	}

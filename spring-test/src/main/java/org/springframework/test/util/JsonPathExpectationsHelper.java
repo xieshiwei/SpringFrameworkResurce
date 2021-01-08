@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.hamcrest.MatcherAssert;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -69,7 +68,7 @@ public class JsonPathExpectationsHelper {
 	 * @param matcher the matcher with which to assert the result
 	 */
 	@SuppressWarnings("unchecked")
-	public <T> void assertValue(String content, Matcher<? super T> matcher) {
+	public <T> void assertValue(String content, Matcher<T> matcher) {
 		T value = (T) evaluateJsonPath(content);
 		MatcherAssert.assertThat("JSON path \"" + this.expression + "\"", value, matcher);
 	}
@@ -80,11 +79,11 @@ public class JsonPathExpectationsHelper {
 	 * matching numbers reliably for example coercing an integer into a double.
 	 * @param content the JSON content
 	 * @param matcher the matcher with which to assert the result
-	 * @param targetType the expected type of the resulting value
+	 * @param targetType a the expected type of the resulting value
 	 * @since 4.3.3
 	 */
 	@SuppressWarnings("unchecked")
-	public <T> void assertValue(String content, Matcher<? super T> matcher, Class<T> targetType) {
+	public <T> void assertValue(String content, Matcher<T> matcher, Class<T> targetType) {
 		T value = (T) evaluateJsonPath(content, targetType);
 		MatcherAssert.assertThat("JSON path \"" + this.expression + "\"", value, matcher);
 	}
@@ -109,17 +108,9 @@ public class JsonPathExpectationsHelper {
 			}
 			actualValue = actualValueList.get(0);
 		}
-		else if (actualValue != null && expectedValue != null &&
-				!actualValue.getClass().equals(expectedValue.getClass())) {
-			try {
+		else if (actualValue != null && expectedValue != null) {
+			if (!actualValue.getClass().equals(expectedValue.getClass())) {
 				actualValue = evaluateJsonPath(content, expectedValue.getClass());
-			}
-			catch (AssertionError error) {
-				String message = String.format(
-					"At JSON path \"%s\", value <%s> of type <%s> cannot be converted to type <%s>",
-					this.expression, actualValue, ClassUtils.getDescriptiveType(actualValue),
-					ClassUtils.getDescriptiveType(expectedValue));
-				throw new AssertionError(message, error.getCause());
 			}
 		}
 		AssertionErrors.assertEquals("JSON path \"" + this.expression + "\"", expectedValue, actualValue);
@@ -307,7 +298,7 @@ public class JsonPathExpectationsHelper {
 
 	/**
 	 * Variant of {@link #evaluateJsonPath(String)} with a target type.
-	 * <p>This can be useful for matching numbers reliably for example coercing an
+	 * This can be useful for matching numbers reliably for example coercing an
 	 * integer into a double.
 	 * @param content the content to evaluate against
 	 * @return the result of the evaluation

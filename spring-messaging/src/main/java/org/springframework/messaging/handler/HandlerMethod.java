@@ -26,6 +26,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.BridgeMethodResolver;
+import org.springframework.core.GenericTypeResolver;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.SynthesizingMethodParameter;
@@ -160,7 +161,9 @@ public class HandlerMethod {
 		int count = this.bridgedMethod.getParameterCount();
 		MethodParameter[] result = new MethodParameter[count];
 		for (int i = 0; i < count; i++) {
-			result[i] = new HandlerMethodParameter(i);
+			HandlerMethodParameter parameter = new HandlerMethodParameter(i);
+			GenericTypeResolver.resolveParameterType(parameter, this.beanType);
+			result[i] = parameter;
 		}
 		return result;
 	}
@@ -295,12 +298,12 @@ public class HandlerMethod {
 	 */
 	public String getShortLogMessage() {
 		int args = this.method.getParameterCount();
-		return getBeanType().getSimpleName() + "#" + this.method.getName() + "[" + args + " args]";
+		return getBeanType().getName() + "#" + this.method.getName() + "[" + args + " args]";
 	}
 
 
 	@Override
-	public boolean equals(@Nullable Object other) {
+	public boolean equals(Object other) {
 		if (this == other) {
 			return true;
 		}

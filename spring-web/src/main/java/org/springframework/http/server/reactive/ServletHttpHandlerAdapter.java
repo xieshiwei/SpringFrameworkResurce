@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ import org.springframework.util.Assert;
  * @since 5.0
  * @see org.springframework.web.server.adapter.AbstractReactiveWebInitializer
  */
+@SuppressWarnings("serial")
 public class ServletHttpHandlerAdapter implements Servlet {
 
 	private static final Log logger = HttpLogging.forLogName(ServletHttpHandlerAdapter.class);
@@ -71,7 +72,7 @@ public class ServletHttpHandlerAdapter implements Servlet {
 	@Nullable
 	private String servletPath;
 
-	private DataBufferFactory dataBufferFactory = DefaultDataBufferFactory.sharedInstance;
+	private DataBufferFactory dataBufferFactory = new DefaultDataBufferFactory(false);
 
 
 	public ServletHttpHandlerAdapter(HttpHandler httpHandler) {

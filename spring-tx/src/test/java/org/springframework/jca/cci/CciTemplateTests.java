@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2019 the original author or authors.
+ * Copyright 2002-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import javax.resource.cci.Record;
 import javax.resource.cci.RecordFactory;
 import javax.resource.cci.ResultSet;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import org.springframework.jca.cci.connection.ConnectionSpecConnectionFactoryAdapter;
 import org.springframework.jca.cci.connection.NotSupportedRecordFactory;
@@ -41,17 +41,14 @@ import org.springframework.jca.cci.core.InteractionCallback;
 import org.springframework.jca.cci.core.RecordCreator;
 import org.springframework.jca.cci.core.RecordExtractor;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.Assert.*;
+import static org.mockito.BDDMockito.*;
 
 /**
  * @author Thierry Templier
  * @author Juergen Hoeller
  * @author Chris Beams
  */
-@Deprecated
 public class CciTemplateTests {
 
 	@Test
@@ -128,8 +125,7 @@ public class CciTemplateTests {
 		ct.setOutputRecordCreator(new RecordCreator() {
 			@Override
 			public Record createRecord(RecordFactory recordFactory) {
-				boolean condition = recordFactory instanceof NotSupportedRecordFactory;
-				assertThat(condition).isTrue();
+				assertTrue(recordFactory instanceof NotSupportedRecordFactory);
 				return outputRecord;
 			}
 		});
@@ -342,7 +338,7 @@ public class CciTemplateTests {
 
 		CciTemplate ct = new CciTemplate(connectionFactory);
 		ct.setOutputRecordCreator(creator);
-		assertThat(ct.execute(interactionSpec, generator, extractor)).isEqualTo(obj);
+		assertEquals(obj, ct.execute(interactionSpec, generator, extractor));
 
 		verify(interaction).close();
 		verify(connection).close();
@@ -535,7 +531,7 @@ public class CciTemplateTests {
 
 		CciTemplate ct = new CciTemplate(connectionFactory);
 		Record tmpOutputRecord = ct.execute(interactionSpec, inputOutputRecord);
-		assertThat(tmpOutputRecord).isNull();
+		assertNull(tmpOutputRecord);
 
 		verify(interaction).execute(interactionSpec, inputOutputRecord);
 		verify(interaction).close();

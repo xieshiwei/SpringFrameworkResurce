@@ -717,11 +717,8 @@ public class Jaxb2Marshaller implements MimeMarshaller, MimeUnmarshaller, Generi
 	/**
 	 * Return a newly created JAXB marshaller.
 	 * <p>Note: JAXB marshallers are not necessarily thread-safe.
-	 * This method is public as of 5.2.
-	 * @since 5.2
-	 * @see #createUnmarshaller()
 	 */
-	public Marshaller createMarshaller() {
+	protected Marshaller createMarshaller() {
 		try {
 			Marshaller marshaller = getJaxbContext().createMarshaller();
 			initJaxbMarshaller(marshaller);
@@ -760,8 +757,8 @@ public class Jaxb2Marshaller implements MimeMarshaller, MimeUnmarshaller, Generi
 	 */
 	protected void initJaxbMarshaller(Marshaller marshaller) throws JAXBException {
 		if (this.marshallerProperties != null) {
-			for (Map.Entry<String, ?> entry : this.marshallerProperties.entrySet()) {
-				marshaller.setProperty(entry.getKey(), entry.getValue());
+			for (String name : this.marshallerProperties.keySet()) {
+				marshaller.setProperty(name, this.marshallerProperties.get(name));
 			}
 		}
 		if (this.marshallerListener != null) {
@@ -822,11 +819,8 @@ public class Jaxb2Marshaller implements MimeMarshaller, MimeUnmarshaller, Generi
 	/**
 	 * Return a newly created JAXB unmarshaller.
 	 * <p>Note: JAXB unmarshallers are not necessarily thread-safe.
-	 * This method is public as of 5.2.
-	 * @since 5.2
-	 * @see #createMarshaller()
 	 */
-	public Unmarshaller createUnmarshaller() {
+	protected Unmarshaller createUnmarshaller() {
 		try {
 			Unmarshaller unmarshaller = getJaxbContext().createUnmarshaller();
 			initJaxbUnmarshaller(unmarshaller);
@@ -914,8 +908,8 @@ public class Jaxb2Marshaller implements MimeMarshaller, MimeUnmarshaller, Generi
 	 */
 	protected void initJaxbUnmarshaller(Unmarshaller unmarshaller) throws JAXBException {
 		if (this.unmarshallerProperties != null) {
-			for (Map.Entry<String, ?> entry : this.unmarshallerProperties.entrySet()) {
-				unmarshaller.setProperty(entry.getKey(), entry.getValue());
+			for (String name : this.unmarshallerProperties.keySet()) {
+				unmarshaller.setProperty(name, this.unmarshallerProperties.get(name));
 			}
 		}
 		if (this.unmarshallerListener != null) {

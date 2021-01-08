@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2019 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package org.springframework.expression.spel.ast;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.StringJoiner;
 
 import org.springframework.asm.MethodVisitor;
 import org.springframework.expression.EvaluationException;
@@ -43,8 +42,8 @@ public class InlineList extends SpelNodeImpl {
 	private TypedValue constant;  // TODO must be immutable list
 
 
-	public InlineList(int startPos, int endPos, SpelNodeImpl... args) {
-		super(startPos, endPos, args);
+	public InlineList(int pos, SpelNodeImpl... args) {
+		super(pos, args);
 		checkIfConstant();
 	}
 
@@ -92,8 +91,8 @@ public class InlineList extends SpelNodeImpl {
 			return this.constant;
 		}
 		else {
+			List<Object> returnValue = new ArrayList<>();
 			int childCount = getChildCount();
-			List<Object> returnValue = new ArrayList<>(childCount);
 			for (int c = 0; c < childCount; c++) {
 				returnValue.add(getChild(c).getValue(expressionState));
 			}
@@ -103,13 +102,17 @@ public class InlineList extends SpelNodeImpl {
 
 	@Override
 	public String toStringAST() {
-		StringJoiner sj = new StringJoiner(",", "{", "}");
+		StringBuilder sb = new StringBuilder("{");
 		// String ast matches input string, not the 'toString()' of the resultant collection, which would use []
 		int count = getChildCount();
 		for (int c = 0; c < count; c++) {
-			sj.add(getChild(c).toStringAST());
+			if (c > 0) {
+				sb.append(",");
+			}
+			sb.append(getChild(c).toStringAST());
 		}
-		return sj.toString();
+		sb.append("}");
+		return sb.toString();
 	}
 
 	/**

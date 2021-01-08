@@ -79,7 +79,6 @@ class DefaultResourceTransformerChain implements ResourceTransformerChain {
 	}
 
 
-	@Override
 	public ResourceResolverChain getResolverChain() {
 		return this.resolverChain;
 	}

@@ -103,7 +103,7 @@ public class StandardWebSocketHandlerAdapter extends Endpoint {
 		try {
 			this.handler.afterConnectionEstablished(this.wsSession);
 		}
-		catch (Exception ex) {
+		catch (Throwable ex) {
 			ExceptionWebSocketHandlerDecorator.tryCloseWithError(this.wsSession, ex, logger);
 		}
 	}
@@ -113,7 +113,7 @@ public class StandardWebSocketHandlerAdapter extends Endpoint {
 		try {
 			this.handler.handleMessage(this.wsSession, textMessage);
 		}
-		catch (Exception ex) {
+		catch (Throwable ex) {
 			ExceptionWebSocketHandlerDecorator.tryCloseWithError(this.wsSession, ex, logger);
 		}
 	}
@@ -123,7 +123,7 @@ public class StandardWebSocketHandlerAdapter extends Endpoint {
 		try {
 			this.handler.handleMessage(this.wsSession, binaryMessage);
 		}
-		catch (Exception ex) {
+		catch (Throwable ex) {
 			ExceptionWebSocketHandlerDecorator.tryCloseWithError(this.wsSession, ex, logger);
 		}
 	}
@@ -133,7 +133,7 @@ public class StandardWebSocketHandlerAdapter extends Endpoint {
 		try {
 			this.handler.handleMessage(this.wsSession, pongMessage);
 		}
-		catch (Exception ex) {
+		catch (Throwable ex) {
 			ExceptionWebSocketHandlerDecorator.tryCloseWithError(this.wsSession, ex, logger);
 		}
 	}
@@ -144,7 +144,7 @@ public class StandardWebSocketHandlerAdapter extends Endpoint {
 		try {
 			this.handler.afterConnectionClosed(this.wsSession, closeStatus);
 		}
-		catch (Exception ex) {
+		catch (Throwable ex) {
 			if (logger.isWarnEnabled()) {
 				logger.warn("Unhandled on-close exception for " + this.wsSession, ex);
 			}
@@ -156,7 +156,7 @@ public class StandardWebSocketHandlerAdapter extends Endpoint {
 		try {
 			this.handler.handleTransportError(this.wsSession, exception);
 		}
-		catch (Exception ex) {
+		catch (Throwable ex) {
 			ExceptionWebSocketHandlerDecorator.tryCloseWithError(this.wsSession, ex, logger);
 		}
 	}

@@ -108,20 +108,8 @@ public class JCacheCache extends AbstractValueAdaptingCache {
 	}
 
 	@Override
-	public boolean evictIfPresent(Object key) {
-		return this.cache.remove(key);
-	}
-
-	@Override
 	public void clear() {
 		this.cache.removeAll();
-	}
-
-	@Override
-	public boolean invalidate() {
-		boolean notEmpty = this.cache.iterator().hasNext();
-		this.cache.removeAll();
-		return notEmpty;
 	}
 
 

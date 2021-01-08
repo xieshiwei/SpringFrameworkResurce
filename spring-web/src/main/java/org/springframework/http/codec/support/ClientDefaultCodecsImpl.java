@@ -96,10 +96,9 @@ class ClientDefaultCodecsImpl extends BaseDefaultCodecs implements ClientCodecCo
 	@Override
 	protected void extendObjectReaders(List<HttpMessageReader<?>> objectReaders) {
 
-		Decoder<?> decoder = (this.sseDecoder != null ? this.sseDecoder :
-				jackson2Present ? getJackson2JsonDecoder() :
-				kotlinSerializationJsonPresent ? getKotlinSerializationJsonDecoder() :
-				null);
+		Decoder<?> decoder = (this.sseDecoder != null ?
+				this.sseDecoder :
+				jackson2Present ? getJackson2JsonDecoder() : null);
 
 		addCodec(objectReaders, new ServerSentEventHttpMessageReader(decoder));
 	}

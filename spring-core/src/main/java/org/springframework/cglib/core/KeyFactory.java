@@ -262,7 +262,7 @@ abstract public class KeyFactory {
 			}
 
 			Type[] parameterTypes = TypeUtils.getTypes(newInstance.getParameterTypes());
-			ce.begin_class(Constants.V1_8,
+			ce.begin_class(Constants.V1_2,
 					Constants.ACC_PUBLIC,
 					getClassName(),
 					KEY_FACTORY,

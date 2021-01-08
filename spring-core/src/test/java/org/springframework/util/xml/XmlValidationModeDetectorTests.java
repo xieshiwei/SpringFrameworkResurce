@@ -18,10 +18,9 @@ package org.springframework.util.xml;
 
 import java.io.InputStream;
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.springframework.util.xml.XmlValidationModeDetector.VALIDATION_DTD;
 
 /**
@@ -30,17 +29,34 @@ import static org.springframework.util.xml.XmlValidationModeDetector.VALIDATION_
  * @author Sam Brannen
  * @since 5.1.10
  */
-class XmlValidationModeDetectorTests {
+public class XmlValidationModeDetectorTests {
 
 	private final XmlValidationModeDetector xmlValidationModeDetector = new XmlValidationModeDetector();
 
 
-	@ParameterizedTest
-	@ValueSource(strings = { "dtdWithTrailingComment.xml", "dtdWithLeadingComment.xml", "dtdWithCommentOnNextLine.xml",
-		"dtdWithMultipleComments.xml" })
-	void dtdDetection(String fileName) throws Exception {
+	@Test
+	public void dtdWithTrailingComment() throws Exception {
+		dtdDetection("dtdWithTrailingComment.xml");
+	}
+
+	@Test
+	public void dtdWithLeadingComment() throws Exception {
+		dtdDetection("dtdWithLeadingComment.xml");
+	}
+
+	@Test
+	public void dtdWithCommentOnNextLine() throws Exception {
+		dtdDetection("dtdWithCommentOnNextLine.xml");
+	}
+
+	@Test
+	public void dtdWithMultipleComments() throws Exception {
+		dtdDetection("dtdWithMultipleComments.xml");
+	}
+
+	private void dtdDetection(String fileName) throws Exception {
 		InputStream inputStream = getClass().getResourceAsStream(fileName);
-		assertThat(xmlValidationModeDetector.detectValidationMode(inputStream)).isEqualTo(VALIDATION_DTD);
+		assertEquals(VALIDATION_DTD, xmlValidationModeDetector.detectValidationMode(inputStream));
 	}
 
 }

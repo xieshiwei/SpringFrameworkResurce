@@ -25,8 +25,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.springframework.lang.Nullable;
-
 /**
  * Simple {@link List} wrapper class that allows for elements to be
  * automatically populated as they are requested. This is particularly
@@ -233,7 +231,7 @@ public class AutoPopulatingList<E> implements List<E>, Serializable {
 
 
 	@Override
-	public boolean equals(@Nullable Object other) {
+	public boolean equals(Object other) {
 		return this.backingList.equals(other);
 	}
 

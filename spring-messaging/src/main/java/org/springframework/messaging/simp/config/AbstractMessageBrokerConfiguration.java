@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,11 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.SmartApplicationListener;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.converter.ByteArrayMessageConverter;
 import org.springframework.messaging.converter.CompositeMessageConverter;
 import org.springframework.messaging.converter.DefaultContentTypeResolver;
-import org.springframework.messaging.converter.GsonMessageConverter;
-import org.springframework.messaging.converter.JsonbMessageConverter;
-import org.springframework.messaging.converter.KotlinSerializationJsonMessageConverter;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.converter.StringMessageConverter;
@@ -57,7 +53,6 @@ import org.springframework.messaging.simp.user.UserRegistryMessageHandler;
 import org.springframework.messaging.support.AbstractSubscribableChannel;
 import org.springframework.messaging.support.ExecutorSubscribableChannel;
 import org.springframework.messaging.support.ImmutableMessageChannelInterceptor;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.util.Assert;
@@ -96,23 +91,8 @@ public abstract class AbstractMessageBrokerConfiguration implements ApplicationC
 
 	private static final String MVC_VALIDATOR_NAME = "mvcValidator";
 
-	private static final boolean jackson2Present;
-
-	private static final boolean gsonPresent;
-
-	private static final boolean jsonbPresent;
-
-	private static final boolean kotlinSerializationJsonPresent;
-
-
-	static {
-		ClassLoader classLoader = AbstractMessageBrokerConfiguration.class.getClassLoader();
-		jackson2Present = ClassUtils.isPresent("com.fasterxml.jackson.databind.ObjectMapper", classLoader) &&
-				ClassUtils.isPresent("com.fasterxml.jackson.core.JsonGenerator", classLoader);
-		gsonPresent = ClassUtils.isPresent("com.google.gson.Gson", classLoader);
-		jsonbPresent = ClassUtils.isPresent("javax.json.bind.Jsonb", classLoader);
-		kotlinSerializationJsonPresent = ClassUtils.isPresent("kotlinx.serialization.json.Json", classLoader);
-	}
+	private static final boolean jackson2Present = ClassUtils.isPresent(
+			"com.fasterxml.jackson.databind.ObjectMapper", AbstractMessageBrokerConfiguration.class.getClassLoader());
 
 
 	@Nullable
@@ -158,7 +138,7 @@ public abstract class AbstractMessageBrokerConfiguration implements ApplicationC
 	}
 
 	@Bean
-	public TaskExecutor clientInboundChannelExecutor() {
+	public ThreadPoolTaskExecutor clientInboundChannelExecutor() {
 		TaskExecutorRegistration reg = getClientInboundChannelRegistration().taskExecutor();
 		ThreadPoolTaskExecutor executor = reg.getTaskExecutor();
 		executor.setThreadNamePrefix("clientInboundChannel-");
@@ -194,7 +174,7 @@ public abstract class AbstractMessageBrokerConfiguration implements ApplicationC
 	}
 
 	@Bean
-	public TaskExecutor clientOutboundChannelExecutor() {
+	public ThreadPoolTaskExecutor clientOutboundChannelExecutor() {
 		TaskExecutorRegistration reg = getClientOutboundChannelRegistration().taskExecutor();
 		ThreadPoolTaskExecutor executor = reg.getTaskExecutor();
 		executor.setThreadNamePrefix("clientOutboundChannel-");
@@ -230,7 +210,7 @@ public abstract class AbstractMessageBrokerConfiguration implements ApplicationC
 	}
 
 	@Bean
-	public TaskExecutor brokerChannelExecutor() {
+	public ThreadPoolTaskExecutor brokerChannelExecutor() {
 		ChannelRegistration reg = getBrokerRegistry().getBrokerChannelRegistration();
 		ThreadPoolTaskExecutor executor;
 		if (reg.hasTaskExecutor()) {
@@ -380,7 +360,7 @@ public abstract class AbstractMessageBrokerConfiguration implements ApplicationC
 
 	// Expose alias for 4.1 compatibility
 	@Bean(name = {"messageBrokerTaskScheduler", "messageBrokerSockJsTaskScheduler"})
-	public TaskScheduler messageBrokerTaskScheduler() {
+	public ThreadPoolTaskScheduler messageBrokerTaskScheduler() {
 		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 		scheduler.setThreadNamePrefix("MessageBroker-");
 		scheduler.setPoolSize(Runtime.getRuntime().availableProcessors());
@@ -408,15 +388,6 @@ public abstract class AbstractMessageBrokerConfiguration implements ApplicationC
 			converters.add(new ByteArrayMessageConverter());
 			if (jackson2Present) {
 				converters.add(createJacksonConverter());
-			}
-			else if (gsonPresent) {
-				converters.add(new GsonMessageConverter());
-			}
-			else if (jsonbPresent) {
-				converters.add(new JsonbMessageConverter());
-			}
-			else if (kotlinSerializationJsonPresent) {
-				converters.add(new KotlinSerializationJsonMessageConverter());
 			}
 		}
 		return new CompositeMessageConverter(converters);

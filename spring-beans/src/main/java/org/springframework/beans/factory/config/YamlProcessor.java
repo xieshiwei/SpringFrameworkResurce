@@ -184,7 +184,7 @@ public abstract class YamlProcessor {
 		loaderOptions.setAllowDuplicateKeys(false);
 
 		if (!this.supportedTypes.isEmpty()) {
-			return new Yaml(new FilteringConstructor(loaderOptions), new Representer(),
+			return new Yaml(new FilteringConstructor(), new Representer(),
 					new DumperOptions(), loaderOptions);
 		}
 		return new Yaml(loaderOptions);
@@ -351,7 +351,6 @@ public abstract class YamlProcessor {
 	/**
 	 * Callback interface used to process the YAML parsing results.
 	 */
-	@FunctionalInterface
 	public interface MatchCallback {
 
 		/**
@@ -368,7 +367,6 @@ public abstract class YamlProcessor {
 	/**
 	 * Strategy interface used to test if properties match.
 	 */
-	@FunctionalInterface
 	public interface DocumentMatcher {
 
 		/**
@@ -437,10 +435,6 @@ public abstract class YamlProcessor {
 	 * {@link IllegalStateException} will be thrown from {@link #getClassForName}.
 	 */
 	private class FilteringConstructor extends Constructor {
-
-		FilteringConstructor(LoaderOptions loaderOptions) {
-			super(loaderOptions);
-		}
 
 		@Override
 		protected Class<?> getClassForName(String name) throws ClassNotFoundException {

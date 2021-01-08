@@ -97,7 +97,6 @@ class WildcardPathElement extends PathElement {
 	}
 
 
-	@Override
 	public String toString() {
 		return "Wildcard(*)";
 	}

@@ -43,10 +43,7 @@ public abstract class AnnotationVisitor {
    */
   protected final int api;
 
-  /**
-   * The annotation visitor to which this visitor must delegate method calls. May be {@literal
-   * null}.
-   */
+  /** The annotation visitor to which this visitor must delegate method calls. May be null. */
   protected AnnotationVisitor av;
 
   /**
@@ -65,19 +62,12 @@ public abstract class AnnotationVisitor {
    * @param api the ASM API version implemented by this visitor. Must be one of {@link
    *     Opcodes#ASM4}, {@link Opcodes#ASM5}, {@link Opcodes#ASM6} or {@link Opcodes#ASM7}.
    * @param annotationVisitor the annotation visitor to which this visitor must delegate method
-   *     calls. May be {@literal null}.
+   *     calls. May be null.
    */
   public AnnotationVisitor(final int api, final AnnotationVisitor annotationVisitor) {
-    if (api != Opcodes.ASM9
-        && api != Opcodes.ASM8
-        && api != Opcodes.ASM7
-        && api != Opcodes.ASM6
-        && api != Opcodes.ASM5
-        && api != Opcodes.ASM4
-        && api != Opcodes.ASM10_EXPERIMENTAL) {
-      throw new IllegalArgumentException("Unsupported api " + api);
+    if (api != Opcodes.ASM6 && api != Opcodes.ASM5 && api != Opcodes.ASM4 && api != Opcodes.ASM7) {
+      throw new IllegalArgumentException();
     }
-    // SPRING PATCH: no preview mode check for ASM 9 experimental
     this.api = api;
     this.av = annotationVisitor;
   }

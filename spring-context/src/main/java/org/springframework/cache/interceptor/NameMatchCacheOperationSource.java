@@ -110,7 +110,7 @@ public class NameMatchCacheOperationSource implements CacheOperationSource, Seri
 	}
 
 	@Override
-	public boolean equals(@Nullable Object other) {
+	public boolean equals(Object other) {
 		if (this == other) {
 			return true;
 		}

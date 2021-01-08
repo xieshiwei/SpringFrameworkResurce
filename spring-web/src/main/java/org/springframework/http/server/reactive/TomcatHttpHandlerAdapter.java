@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 import javax.servlet.AsyncContext;
-import javax.servlet.ServletInputStream;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
@@ -44,7 +43,6 @@ import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.util.Assert;
-import org.springframework.util.MultiValueMap;
 import org.springframework.util.ReflectionUtils;
 
 /**
@@ -106,13 +104,14 @@ public class TomcatHttpHandlerAdapter extends ServletHttpHandlerAdapter {
 			this.bufferSize = bufferSize;
 		}
 
-		private static MultiValueMap<String, String> createTomcatHttpHeaders(HttpServletRequest request) {
+		private static HttpHeaders createTomcatHttpHeaders(HttpServletRequest request) {
 			RequestFacade requestFacade = getRequestFacade(request);
 			org.apache.catalina.connector.Request connectorRequest = (org.apache.catalina.connector.Request)
 					ReflectionUtils.getField(COYOTE_REQUEST_FIELD, requestFacade);
 			Assert.state(connectorRequest != null, "No Tomcat connector request");
 			Request tomcatRequest = connectorRequest.getCoyoteRequest();
-			return new TomcatHeadersAdapter(tomcatRequest.getMimeHeaders());
+			TomcatHeadersAdapter headers = new TomcatHeadersAdapter(tomcatRequest.getMimeHeaders());
+			return new HttpHeaders(headers);
 		}
 
 		private static RequestFacade getRequestFacade(HttpServletRequest request) {
@@ -132,17 +131,13 @@ public class TomcatHttpHandlerAdapter extends ServletHttpHandlerAdapter {
 
 		@Override
 		protected DataBuffer readFromInputStream() throws IOException {
-			ServletInputStream inputStream = ((ServletRequest) getNativeRequest()).getInputStream();
-			if (!(inputStream instanceof CoyoteInputStream)) {
-				// It's possible InputStream can be wrapped, preventing use of CoyoteInputStream
-				return super.readFromInputStream();
-			}
 			boolean release = true;
 			int capacity = this.bufferSize;
 			DataBuffer dataBuffer = this.factory.allocateBuffer(capacity);
 			try {
 				ByteBuffer byteBuffer = dataBuffer.asByteBuffer(0, capacity);
-				int read = ((CoyoteInputStream) inputStream).read(byteBuffer);
+				ServletRequest request = getNativeRequest();
+				int read = ((CoyoteInputStream) request.getInputStream()).read(byteBuffer);
 				logBytesRead(read);
 				if (read > 0) {
 					dataBuffer.writePosition(read);

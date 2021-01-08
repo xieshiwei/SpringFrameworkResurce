@@ -17,7 +17,6 @@
 package org.springframework.expression.spel.ast;
 
 import java.util.List;
-import java.util.StringJoiner;
 
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.lang.Nullable;
@@ -37,16 +36,22 @@ abstract class FormatHelper {
 	 * @return a nicely formatted representation, e.g. {@code foo(String,int)}
 	 */
 	public static String formatMethodForMessage(String name, List<TypeDescriptor> argumentTypes) {
-		StringJoiner sj = new StringJoiner(",", "(", ")");
-		for (TypeDescriptor typeDescriptor : argumentTypes) {
+		StringBuilder sb = new StringBuilder(name);
+		sb.append("(");
+		for (int i = 0; i < argumentTypes.size(); i++) {
+			if (i > 0) {
+				sb.append(",");
+			}
+			TypeDescriptor typeDescriptor = argumentTypes.get(i);
 			if (typeDescriptor != null) {
-				sj.add(formatClassNameForMessage(typeDescriptor.getType()));
+				sb.append(formatClassNameForMessage(typeDescriptor.getType()));
 			}
 			else {
-				sj.add(formatClassNameForMessage(null));
+				sb.append(formatClassNameForMessage(null));
 			}
 		}
-		return name + sj.toString();
+		sb.append(")");
+		return sb.toString();
 	}
 
 	/**

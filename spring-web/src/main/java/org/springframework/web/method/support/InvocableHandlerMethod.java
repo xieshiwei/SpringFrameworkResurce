@@ -20,9 +20,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
-import org.springframework.core.CoroutinesUtils;
 import org.springframework.core.DefaultParameterNameDiscoverer;
-import org.springframework.core.KotlinDetector;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.lang.Nullable;
@@ -41,7 +39,6 @@ import org.springframework.web.method.HandlerMethod;
  *
  * @author Rossen Stoyanchev
  * @author Juergen Hoeller
- * @author Sebastien Deleuze
  * @since 3.1
  */
 public class InvocableHandlerMethod extends HandlerMethod {
@@ -188,16 +185,12 @@ public class InvocableHandlerMethod extends HandlerMethod {
 	 */
 	@Nullable
 	protected Object doInvoke(Object... args) throws Exception {
-		Method method = getBridgedMethod();
-		ReflectionUtils.makeAccessible(method);
+		ReflectionUtils.makeAccessible(getBridgedMethod());
 		try {
-			if (KotlinDetector.isSuspendingFunction(method)) {
-				return CoroutinesUtils.invokeSuspendingFunction(method, getBean(), args);
-			}
-			return method.invoke(getBean(), args);
+			return getBridgedMethod().invoke(getBean(), args);
 		}
 		catch (IllegalArgumentException ex) {
-			assertTargetBean(method, getBean(), args);
+			assertTargetBean(getBridgedMethod(), getBean(), args);
 			String text = (ex.getMessage() != null ? ex.getMessage() : "Illegal argument");
 			throw new IllegalStateException(formatInvokeError(text, args), ex);
 		}

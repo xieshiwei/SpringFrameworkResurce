@@ -81,7 +81,8 @@ public class ObjectToStringHttpMessageConverter extends AbstractHttpMessageConve
 
 
 	/**
-	 * Delegates to {@link StringHttpMessageConverter#setWriteAcceptCharset(boolean)}.
+	 * Indicates whether the {@code Accept-Charset} should be written to any outgoing request.
+	 * <p>Default is {@code true}.
 	 */
 	public void setWriteAcceptCharset(boolean writeAcceptCharset) {
 		this.stringHttpMessageConverter.setWriteAcceptCharset(writeAcceptCharset);

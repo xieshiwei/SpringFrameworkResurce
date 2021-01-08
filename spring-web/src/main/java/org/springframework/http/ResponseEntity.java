@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -113,18 +112,9 @@ public class ResponseEntity<T> extends HttpEntity<T> {
 	 * @param status the status code
 	 */
 	public ResponseEntity(@Nullable T body, @Nullable MultiValueMap<String, String> headers, HttpStatus status) {
-		this(body, headers, (Object) status);
-	}
-
-	/**
-	 * Create a new {@code HttpEntity} with the given body, headers, and status code.
-	 * @param body the entity body
-	 * @param headers the entity headers
-	 * @param rawStatus the status code value
-	 * @since 5.3.2
-	 */
-	public ResponseEntity(@Nullable T body, @Nullable MultiValueMap<String, String> headers, int rawStatus) {
-		this(body, headers, (Object) rawStatus);
+		super(body, headers);
+		Assert.notNull(status, "HttpStatus must not be null");
+		this.status = status;
 	}
 
 	/**
@@ -346,18 +336,6 @@ public class ResponseEntity<T> extends HttpEntity<T> {
 		B headers(@Nullable HttpHeaders headers);
 
 		/**
-		 * Manipulate this entity's headers with the given consumer. The
-		 * headers provided to the consumer are "live", so that the consumer can be used to
-		 * {@linkplain HttpHeaders#set(String, String) overwrite} existing header values,
-		 * {@linkplain HttpHeaders#remove(Object) remove} values, or use any of the other
-		 * {@link HttpHeaders} methods.
-		 * @param headersConsumer a function that consumes the {@code HttpHeaders}
-		 * @return this builder
-		 * @since 5.2
-		 */
-		B headers(Consumer<HttpHeaders> headersConsumer);
-
-		/**
 		 * Set the set of allowed {@link HttpMethod HTTP methods}, as specified
 		 * by the {@code Allow} header.
 		 * @param allowedMethods the allowed methods
@@ -502,12 +480,6 @@ public class ResponseEntity<T> extends HttpEntity<T> {
 			if (headers != null) {
 				this.headers.putAll(headers);
 			}
-			return this;
-		}
-
-		@Override
-		public BodyBuilder headers(Consumer<HttpHeaders> headersConsumer) {
-			headersConsumer.accept(this.headers);
 			return this;
 		}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Random;
@@ -33,7 +34,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.InvalidMediaTypeException;
@@ -49,6 +49,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.sockjs.SockJsException;
 import org.springframework.web.socket.sockjs.SockJsService;
@@ -471,7 +472,8 @@ public abstract class AbstractSockJsService implements SockJsService, CorsConfig
 	private boolean validatePath(ServerHttpRequest request) {
 		String path = request.getURI().getPath();
 		int index = path.lastIndexOf('/') + 1;
-		return (path.indexOf(';', index) == -1);
+		String filename = path.substring(index);
+		return (filename.indexOf(';') == -1);
 	}
 
 	protected boolean checkOrigin(ServerHttpRequest request, ServerHttpResponse response, HttpMethod... httpMethods)
@@ -495,7 +497,7 @@ public abstract class AbstractSockJsService implements SockJsService, CorsConfig
 	@Override
 	@Nullable
 	public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
-		if (!this.suppressCors && (request.getHeader(HttpHeaders.ORIGIN) != null)) {
+		if (!this.suppressCors && CorsUtils.isCorsRequest(request)) {
 			CorsConfiguration config = new CorsConfiguration();
 			config.setAllowedOrigins(new ArrayList<>(this.allowedOrigins));
 			config.addAllowedMethod("*");
@@ -509,7 +511,7 @@ public abstract class AbstractSockJsService implements SockJsService, CorsConfig
 
 	protected void addCacheHeaders(ServerHttpResponse response) {
 		response.getHeaders().setCacheControl("public, max-age=" + ONE_YEAR);
-		response.getHeaders().setExpires(System.currentTimeMillis() + ONE_YEAR * 1000);
+		response.getHeaders().setExpires(new Date().getTime() + ONE_YEAR * 1000);
 	}
 
 	protected void addNoCacheHeaders(ServerHttpResponse response) {
@@ -569,7 +571,7 @@ public abstract class AbstractSockJsService implements SockJsService, CorsConfig
 				sendMethodNotAllowed(response, HttpMethod.GET, HttpMethod.OPTIONS);
 			}
 		}
-	}
+	};
 
 
 	private class IframeHandler implements SockJsRequestHandler {
@@ -620,6 +622,6 @@ public abstract class AbstractSockJsService implements SockJsService, CorsConfig
 			response.getHeaders().setETag(etagValue);
 			response.getBody().write(contentBytes);
 		}
-	}
+	};
 
 }

@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.springframework.core.io.AbstractResource;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -87,7 +86,7 @@ class MultipartFileResource extends AbstractResource {
 
 
 	@Override
-	public boolean equals(@Nullable Object other) {
+	public boolean equals(Object other) {
 		return (this == other || (other instanceof MultipartFileResource &&
 				((MultipartFileResource) other).multipartFile.equals(this.multipartFile)));
 	}

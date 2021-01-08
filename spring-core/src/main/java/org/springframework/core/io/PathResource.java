@@ -32,7 +32,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -277,7 +276,7 @@ public class PathResource extends AbstractResource implements WritableResource {
 	 * This implementation compares the underlying Path references.
 	 */
 	@Override
-	public boolean equals(@Nullable Object other) {
+	public boolean equals(Object other) {
 		return (this == other || (other instanceof PathResource &&
 				this.path.equals(((PathResource) other).path)));
 	}

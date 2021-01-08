@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2019 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,9 @@ import javax.cache.annotation.CacheInvocationParameter;
 import javax.cache.annotation.CacheMethodDetails;
 import javax.cache.annotation.CachePut;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.junit.Assert.*;
 
 /**
  * @author Stephane Nicoll
@@ -45,12 +43,12 @@ public class CachePutOperationTests extends AbstractCacheOperationTests<CachePut
 		CachePutOperation operation = createSimpleOperation();
 
 		CacheInvocationParameter[] allParameters = operation.getAllParameters(2L, sampleInstance);
-		assertThat(allParameters.length).isEqualTo(2);
+		assertEquals(2, allParameters.length);
 		assertCacheInvocationParameter(allParameters[0], Long.class, 2L, 0);
 		assertCacheInvocationParameter(allParameters[1], SampleObject.class, sampleInstance, 1);
 
 		CacheInvocationParameter valueParameter = operation.getValueParameter(2L, sampleInstance);
-		assertThat(valueParameter).isNotNull();
+		assertNotNull(valueParameter);
 		assertCacheInvocationParameter(valueParameter, SampleObject.class, sampleInstance, 1);
 	}
 
@@ -59,8 +57,8 @@ public class CachePutOperationTests extends AbstractCacheOperationTests<CachePut
 		CacheMethodDetails<CachePut> methodDetails = create(CachePut.class,
 				SampleObject.class, "noCacheValue", Long.class);
 
-		assertThatIllegalArgumentException().isThrownBy(() ->
-				createDefaultOperation(methodDetails));
+		thrown.expect(IllegalArgumentException.class);
+		createDefaultOperation(methodDetails);
 	}
 
 	@Test
@@ -68,16 +66,16 @@ public class CachePutOperationTests extends AbstractCacheOperationTests<CachePut
 		CacheMethodDetails<CachePut> methodDetails = create(CachePut.class,
 				SampleObject.class, "multiCacheValues", Long.class, SampleObject.class, SampleObject.class);
 
-		assertThatIllegalArgumentException().isThrownBy(() ->
-				createDefaultOperation(methodDetails));
+		thrown.expect(IllegalArgumentException.class);
+		createDefaultOperation(methodDetails);
 	}
 
 	@Test
 	public void invokeWithWrongParameters() {
 		CachePutOperation operation = createSimpleOperation();
 
-		assertThatIllegalStateException().isThrownBy(() ->
-				operation.getValueParameter(2L));
+		thrown.expect(IllegalStateException.class);
+		operation.getValueParameter(2L);
 	}
 
 	@Test
@@ -85,10 +83,10 @@ public class CachePutOperationTests extends AbstractCacheOperationTests<CachePut
 		CacheMethodDetails<CachePut> methodDetails = create(CachePut.class,
 				SampleObject.class, "fullPutConfig", Long.class, SampleObject.class);
 		CachePutOperation operation = createDefaultOperation(methodDetails);
-		assertThat(operation.isEarlyPut()).isTrue();
-		assertThat(operation.getExceptionTypeFilter()).isNotNull();
-		assertThat(operation.getExceptionTypeFilter().match(IOException.class)).isTrue();
-		assertThat(operation.getExceptionTypeFilter().match(NullPointerException.class)).isFalse();
+		assertTrue(operation.isEarlyPut());
+		assertNotNull(operation.getExceptionTypeFilter());
+		assertTrue(operation.getExceptionTypeFilter().match(IOException.class));
+		assertFalse(operation.getExceptionTypeFilter().match(NullPointerException.class));
 	}
 
 	private CachePutOperation createDefaultOperation(CacheMethodDetails<CachePut> methodDetails) {

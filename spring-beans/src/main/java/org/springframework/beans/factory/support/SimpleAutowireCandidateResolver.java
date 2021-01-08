@@ -30,13 +30,6 @@ import org.springframework.lang.Nullable;
  */
 public class SimpleAutowireCandidateResolver implements AutowireCandidateResolver {
 
-	/**
-	 * Shared instance of {@code SimpleAutowireCandidateResolver}.
-	 * @since 5.2.7
-	 */
-	public static final SimpleAutowireCandidateResolver INSTANCE = new SimpleAutowireCandidateResolver();
-
-
 	@Override
 	public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
 		return bdHolder.getBeanDefinition().isAutowireCandidate();
@@ -62,15 +55,6 @@ public class SimpleAutowireCandidateResolver implements AutowireCandidateResolve
 	@Nullable
 	public Object getLazyResolutionProxyIfNecessary(DependencyDescriptor descriptor, @Nullable String beanName) {
 		return null;
-	}
-
-	/**
-	 * This implementation returns {@code this} as-is.
-	 * @see #INSTANCE
-	 */
-	@Override
-	public AutowireCandidateResolver cloneIfNecessary() {
-		return this;
 	}
 
 }
