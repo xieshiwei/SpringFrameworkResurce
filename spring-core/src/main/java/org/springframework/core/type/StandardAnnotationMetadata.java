@@ -55,6 +55,10 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 	}
 
 	/**
+	 * 给指定的对象创建一个包装器
+	 * （包装器模式：允许向一个现有的对象添加新的功能，同时又不改变其结构。
+	 * 装饰者可以在所委托被装饰者的行为之前或之后加上自己的行为，以达到特定的目的（如：功能的增强）。）
+	 *
 	 * Create a new {@link StandardAnnotationMetadata} wrapper for the given Class,
 	 * providing the option to return any nested annotations or annotation arrays in the
 	 * form of {@link org.springframework.core.annotation.AnnotationAttributes} instead

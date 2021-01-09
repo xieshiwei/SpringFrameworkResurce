@@ -700,6 +700,10 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	}
 
 	/**
+	 * 指定用于创建bean实例的回调，替代声明性指定的工厂方法。
+	 * <p>如果设置了这样的回调，它将覆盖任何其他构造函数或工厂方法元数据。
+	 * 但是，bean参数和注解，注入不变
+	 *
 	 * Specify a callback for creating an instance of the bean,
 	 * as an alternative to a declaratively specified factory method.
 	 * <p>If such a callback is set, it will override any other constructor

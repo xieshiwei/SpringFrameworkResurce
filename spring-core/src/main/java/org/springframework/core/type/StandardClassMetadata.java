@@ -36,6 +36,9 @@ public class StandardClassMetadata implements ClassMetadata {
 
 
 	/**
+	 * 给指定的对象创建一个包装器
+	 * （包装器模式：允许向一个现有的对象添加新的功能，同时又不改变其结构。
+	 * 装饰者可以在所委托被装饰者的行为之前或之后加上自己的行为，以达到特定的目的（如：功能的增强）。）
 	 * Create a new StandardClassMetadata wrapper for the given Class.
 	 * @param introspectedClass the Class to introspect
 	 */

@@ -29,6 +29,7 @@ import org.springframework.beans.factory.config.BeanDefinition;
 public interface ScopeMetadataResolver {
 
 	/**
+	 * 判断注册的Bean 是原生类型(prototype)还是单例(singleton)类型
 	 * Resolve the {@link ScopeMetadata} appropriate to the supplied
 	 * bean {@code definition}.
 	 * <p>Implementations can of course use any strategy they like to
