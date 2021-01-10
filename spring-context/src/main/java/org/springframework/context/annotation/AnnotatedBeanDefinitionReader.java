@@ -210,6 +210,8 @@ public class AnnotatedBeanDefinitionReader {
 	}
 
 	/**
+	 * 注册一个或多个要处理的 bean。
+	 *
 	 * Register a bean from the given bean class, deriving its metadata from
 	 * class-declared annotations.
 	 *
@@ -226,10 +228,13 @@ public class AnnotatedBeanDefinitionReader {
 	<T> void doRegisterBean(Class<T> beanClass, @Nullable Supplier<T> instanceSupplier, @Nullable String name,
 							@Nullable Class<? extends Annotation>[] qualifiers, BeanDefinitionCustomizer... definitionCustomizers) {
 
-		//创建BeanDefinition，将类转换为AnnotatedGenericBeanDefinition
+		//创建 AnnotatedGenericBeanDefinition，存储 @Configuration 注解注释的类
 		AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(beanClass);
-		//调用conditionEvaluator的shouldSkip判断是否需要过滤，shouldSkip方法中先判断类上是否有Conditional注解，
-		// 只处理有Conditional注解或其衍生注解的情况。
+		/**
+		 * 调用 conditionEvaluator 的 shouldSkip 判断是否需要过滤
+		 * shouldSkip 方法中先判断类上是否有 Conditional 注解
+		 * 只处理有 Conditional 注解或其衍生注解的情况。
+		 */
 		if (this.conditionEvaluator.shouldSkip(abd.getMetadata())) {
 			return;
 		}
